@@ -1,0 +1,13 @@
+{
+  "name": "sherpas-sales-center",
+  "version": "5.0.0",
+  "description": "Sherpas Sales Center — outil interne d'aide à la vente",
+  "scripts": {
+    "build": "node build.js"
+  },
+  "devDependencies": {
+    "@babel/core": "^7.23.5",
+    "@babel/preset-react": "^7.23.3",
+    "@babel/plugin-transform-class-properties": "^7.23.3"
+  }
+}
