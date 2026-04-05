@@ -18,10 +18,10 @@ jobs:
       - name: Setup Node.js
         uses: actions/setup-node@v4
         with:
-          node-version: '20'
+          node-version: '22'
 
       - name: Install Babel
-        run: npm install
+        run: npm install --save-dev @babel/core @babel/preset-react @babel/plugin-transform-class-properties
 
       - name: Compile JSX
         run: node build.js
@@ -31,5 +31,5 @@ jobs:
           git config user.email "action@github.com"
           git config user.name "GitHub Action"
           git add index.html
-          git diff --staged --quiet && echo "Rien à committer" || git commit -m "build: compile JSX [skip ci]"
+          git diff --staged --quiet && echo "Rien a committer" || git commit -m "build: compile JSX [skip ci]"
           git push
