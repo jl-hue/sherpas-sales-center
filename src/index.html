@@ -5,16 +5,31 @@
 <title>🏔️ Sherpas Sales Center V5</title>
 <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@400;500;600;700;800;900&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet"/>
 
-<!-- Preload hints : le navigateur télécharge en parallèle dès l'ouverture -->
+<!-- Cache check : si compilé en cache, Babel ne sera pas chargé du tout -->
+<script>
+(function(){
+  var CACHE_VER = 'd435f3762b18'; // change si le code change
+  var KEY = 'sc_app';
+  var VER_KEY = 'sc_ver';
+  try {
+    if(localStorage.getItem(VER_KEY) === CACHE_VER) {
+      window.__compiledJS = localStorage.getItem(KEY);
+    }
+  } catch(e) {}
+  window.__CACHE_VER = CACHE_VER;
+  window.__CACHE_KEY = KEY;
+  window.__CACHE_VER_KEY = VER_KEY;
+})();
+</script>
+
+<!-- React + Supabase : toujours nécessaires, petits, en parallèle -->
 <link rel="preload" as="script" href="https://cdnjs.cloudflare.com/ajax/libs/react/18.2.0/umd/react.production.min.js"/>
 <link rel="preload" as="script" href="https://cdnjs.cloudflare.com/ajax/libs/react-dom/18.2.0/umd/react-dom.production.min.js"/>
-<link rel="preload" as="script" href="https://cdn.jsdelivr.net/npm/@babel/standalone@7.23.5/babel.min.js"/>
 <link rel="preload" as="script" href="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.min.js"/>
 
 <script src="https://cdnjs.cloudflare.com/ajax/libs/react/18.2.0/umd/react.production.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.min.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/react-dom/18.2.0/umd/react-dom.production.min.js"></script>
-<script src="https://cdn.jsdelivr.net/npm/@babel/standalone@7.23.5/babel.min.js"></script>
 <style>
 *{box-sizing:border-box;margin:0;padding:0;}
 body{font-family:'Inter',sans-serif;background:#F8FFF9;color:#18181B;}
@@ -23,9 +38,10 @@ input,textarea,select{font-family:'Inter',sans-serif;}
 button:focus{outline:none;}
 ::-webkit-scrollbar{width:4px;}
 ::-webkit-scrollbar-thumb{background:#C0EAD3;border-radius:2px;}
-#loading{position:fixed;inset:0;background:linear-gradient(135deg,#16A34A,#62E58E);display:flex;flex-direction:column;align-items:center;justify-content:center;z-index:999;transition:opacity .5s;}
+#loading{position:fixed;inset:0;background:linear-gradient(135deg,#16A34A,#62E58E);display:flex;flex-direction:column;align-items:center;justify-content:center;z-index:999;transition:opacity .4s;}
 #loading h1{color:#fff;font-family:'Outfit',sans-serif;font-size:26px;font-weight:900;margin-top:14px;}
 #loading p{color:rgba(255,255,255,.75);margin-top:6px;font-size:14px;}
+#loading .cache-badge{margin-top:10px;background:rgba(255,255,255,.2);color:#fff;border-radius:99px;padding:3px 12px;font-size:11px;font-family:'Outfit',sans-serif;font-weight:700;}
 .spin{width:38px;height:38px;border:3px solid rgba(255,255,255,.3);border-top-color:#fff;border-radius:50%;animation:spin .8s linear infinite;margin-top:18px;}
 @keyframes spin{to{transform:rotate(360deg)}}
 .copy-btn{transition:all .15s;}
@@ -39,22 +55,30 @@ input[type=range]::-webkit-slider-thumb{-webkit-appearance:none;width:20px;heigh
   <svg width="52" height="36" viewBox="0 0 52 36" fill="none"><rect x="0" y="0" width="44" height="16" rx="8" fill="white"/><rect x="8" y="20" width="44" height="16" rx="8" fill="rgba(255,255,255,.65)"/></svg>
   <h1>Les Sherpas</h1>
   <p id="loading-msg">Chargement en cours…</p>
+  <div id="loading-badge" class="cache-badge" style="display:none"></div>
   <div class="spin"></div>
 </div>
 <script>
-// Mise à jour du message de chargement pour informer l'utilisateur
-var msgs = ["Chargement des librairies…","Compilation de l'interface…","Préparation de la Lanterne V5…"];
-var mi = 0;
+// Affiche le statut cache sur l'écran de chargement
 var msgEl = document.getElementById('loading-msg');
-var interval = setInterval(function(){
-  mi = (mi + 1) % msgs.length;
-  if(msgEl) msgEl.textContent = msgs[mi];
-}, 1500);
-window.__clearLoadingInterval = function(){ clearInterval(interval); };
+var badgeEl = document.getElementById('loading-badge');
+if(window.__compiledJS) {
+  if(msgEl) msgEl.textContent = 'Démarrage instantané…';
+  if(badgeEl){ badgeEl.textContent = '⚡ Cache actif'; badgeEl.style.display='inline-block'; }
+} else {
+  if(msgEl) msgEl.textContent = 'Première ouverture — compilation en cours…';
+  if(badgeEl){ badgeEl.textContent = '⏳ Compilation (une seule fois)'; badgeEl.style.display='inline-block'; }
+}
+window.__clearLoading = function(){
+  if(msgEl) msgEl.textContent = 'Prêt !';
+  document.getElementById('loading').style.opacity='0';
+  setTimeout(()=>document.getElementById('loading').style.display='none',400);
+};
 </script>
 <div id="root"></div>
 
-<script type="text/babel" data-presets="react" data-plugins="transform-class-properties">
+<!-- Source JSX stocké comme données, pas exécuté directement -->
+<script type="text/jsx-source" id="app-source">
 const {useState,useMemo,useCallback,useEffect,useRef}=React;
 
 // ═══════════════════════ SUPABASE ═══════════════════════
@@ -397,8 +421,201 @@ function Sidebar({role,page,setPage,onExit}){
   </div>;
 }
 
+// ═══════════════════════ MATRICE NEUROATYPIQUES ═══════════════════════
+const NEURO_PROFS=["Psychologue","Prof EN Psychopédagogie","Professeur EN classique","AESH / AVS","Étudiant en Psychologie"];
+const NEURO_TROUBLES=["TDAH","TSA","DYS","HPI","Multi-dys / profil complexe"];
+const NEURO_COLORS={TDAH:"#0B68B4",TSA:"#7C3AED",DYS:"#DA4F00",HPI:"#D97706","Multi-dys / profil complexe":"#E11D48"};
+const NEURO_EMOJIS={TDAH:"⚡",TSA:"🧩",DYS:"📖",HPI:"🌟","Multi-dys / profil complexe":"🔀"};
+
+const NEURO_MATRIX=[
+  // ── PSYCHOLOGUE ──────────────────────────────────────────────────
+  {prof:"Psychologue",trouble:"TDAH",badge:"ideal",
+   realite:"Le psychologue comprend les mécanismes neurobiologiques du TDAH et peut adapter chaque séance en temps réel selon l'état attentionnel de l'élève.",
+   appel:"'Notre psychologue ne fait pas que 'gérer' le TDAH — il comprend pourquoi votre enfant est comme il est, et il construit chaque séance autour de ça. Ce n'est pas du rattrapage, c'est de la pédagogie sur mesure.'"},
+  {prof:"Psychologue",trouble:"TSA",badge:"ideal",
+   realite:"Formé aux troubles envahissants du développement, le psychologue sait créer l'environnement prévisible et structuré dont l'élève TSA a besoin pour apprendre.",
+   appel:"'Votre enfant a besoin d'un cadre très précis pour être à l'aise. Notre psychologue sait exactement comment le créer — même à distance, même la première séance.'"},
+  {prof:"Psychologue",trouble:"DYS",badge:"acceptable",
+   realite:"Le psychologue comprend les mécanismes des troubles DYS mais n'est pas spécialiste de la pédagogie adaptée. Son apport est fort sur le plan émotionnel, moins sur les outils concrets.",
+   appel:"'Pour la DYS, notre psychologue est excellent pour travailler la confiance en soi et le rapport à l'échec — qui sont souvent le vrai frein. Sur les outils pédagogiques, on le pair avec un spécialiste si besoin.'"},
+  {prof:"Psychologue",trouble:"HPI",badge:"ideal",
+   realite:"Le psychologue est particulièrement adapté au HPI : il comprend la double exceptionnalité, gère la dysharmonie développementale et sait stimuler sans surcharger.",
+   appel:"'Un enfant HPI ne souffre pas d'un manque — il souffre d'un décalage. Notre psychologue comprend ça. Il va travailler l'intelligence émotionnelle autant que le potentiel intellectuel.'"},
+  {prof:"Psychologue",trouble:"Multi-dys / profil complexe",badge:"ideal",
+   realite:"Face à un profil complexe, le psychologue est le seul profil capable d'une lecture globale — cognitive, émotionnelle et comportementale — sans réduire l'élève à une seule étiquette.",
+   appel:"'Quand un enfant a plusieurs troubles à la fois, il faut quelqu'un qui voit le tableau complet. Notre psychologue, c'est exactement ça — un chef d'orchestre qui comprend chaque instrument.'"},
+
+  // ── PROF EN PSYCHOPÉDAGOGIE ──────────────────────────────────────
+  {prof:"Prof EN Psychopédagogie",trouble:"TDAH",badge:"ideal",
+   realite:"La double formation pédagogie + psychologie en fait le profil le plus complet : il sait à la fois adapter les exercices ET comprendre les dynamiques attentionnelles.",
+   appel:"'Ce profil, c'est le meilleur des deux mondes — un vrai prof qui sait faire cours, et quelqu'un qui comprend précisément pourquoi votre enfant décroche. C'est rare, et c'est ce dont il a besoin.'"},
+  {prof:"Prof EN Psychopédagogie",trouble:"TSA",badge:"acceptable",
+   realite:"Sa formation lui donne les bases théoriques, mais la pratique avec TSA est très variable. Certains excellents, d'autres démunis. Il faut vérifier son expérience concrète.",
+   appel:"'Notre prof en psychopédagogie a les outils pour accompagner votre enfant, mais je veux être honnête : je vais m'assurer qu'il a une vraie expérience avec le TSA avant de vous le proposer.'"},
+  {prof:"Prof EN Psychopédagogie",trouble:"DYS",badge:"ideal",
+   realite:"C'est le profil de référence pour la DYS. Il connaît les outils de compensation, les adaptations pédagogiques officielles et sait travailler en lien avec les bilans orthophoniques.",
+   appel:"'Pour la dyslexie, la dysorthographie ou la dyspraxie, ce profil est vraiment notre expert. Il ne va pas juste 'faire avec' les difficultés — il a des méthodes conçues spécifiquement pour les contourner.'"},
+  {prof:"Prof EN Psychopédagogie",trouble:"HPI",badge:"ideal",
+   realite:"Formé à la double exceptionnalité HPI + DYS, il comprend les paradoxes du HPI (très fort / très fragile) et sait adapter son niveau sans ennuyer ni surcharger.",
+   appel:"'Un enfant HPI peut être brillant et en grande difficulté en même temps. Notre prof en psychopédagogie comprend cette contradiction — et il sait précisément comment y répondre.'"},
+  {prof:"Prof EN Psychopédagogie",trouble:"Multi-dys / profil complexe",badge:"ideal",
+   realite:"C'est le profil idéal pour les cas complexes : il lit plusieurs troubles simultanément, adapte en continu et comprend les interactions entre les différents déficits.",
+   appel:"'Quand le bilan révèle plusieurs troubles qui s'additionnent, il faut quelqu'un de très spécialisé. Notre prof en psychopédagogie, c'est précisément sa spécialité — les profils qu'on ne sait pas comment aborder.'"},
+
+  // ── PROFESSEUR EN CLASSIQUE ──────────────────────────────────────
+  {prof:"Professeur EN classique",trouble:"TDAH",badge:"acceptable",
+   realite:"Sa pédagogie structurée peut aider, mais sans formation aux troubles attentionnels, il risque de mal interpréter l'agitation ou l'oubli comme du manque de volonté.",
+   appel:"'Notre professeur certifié a une vraie rigueur pédagogique qui peut aider à structurer votre enfant. Je serai transparent : il n'est pas spécialisé TDAH, mais on peut lui demander de s'adapter au rythme de votre enfant.'"},
+  {prof:"Professeur EN classique",trouble:"TSA",badge:"deconseille",
+   realite:"Sans formation spécifique au TSA, il risque de créer des situations d'incompréhension mutuelle. Les codes implicites de la communication scolaire classique ne fonctionnent pas avec le TSA.",
+   appel:"'Soyons honnêtes : pour un profil TSA, un professeur classique sans formation spécifique, ce n'est pas le bon choix. Je préfère vous orienter vers quelqu'un de vraiment adapté plutôt que de prendre un risque.'"},
+  {prof:"Professeur EN classique",trouble:"DYS",badge:"acceptable",
+   realite:"Il peut adapter en surface (agrandir les textes, donner plus de temps) mais sans connaître les mécanismes DYS profonds, ses adaptations restent insuffisantes pour un trouble sévère.",
+   appel:"'Notre professeur peut adapter ses supports et son rythme. Pour une DYS légère à modérée, ça fonctionne bien. Pour un cas plus sévère, je préférerais vous proposer un spécialiste — mais soyons pragmatiques d'abord.'"},
+  {prof:"Professeur EN classique",trouble:"HPI",badge:"acceptable",
+   realite:"Il peut stimuler un HPI intellectuellement, mais risque de mal gérer l'ennui, l'insolence apparente ou les questions déstabilisantes. La relation peut vite devenir tendue.",
+   appel:"'Un professeur certifié peut vraiment nourrir la curiosité d'un enfant HPI sur le contenu. Le défi, c'est la relation — mais avec les bons repères, ça peut très bien se passer.'"},
+  {prof:"Professeur EN classique",trouble:"Multi-dys / profil complexe",badge:"deconseille",
+   realite:"Un profil multi-dys requiert des adaptations simultanées sur plusieurs axes. Sans formation spécialisée, le prof classique ne peut pas gérer cette complexité sans mettre l'élève en échec.",
+   appel:"'Je vais être direct : pour un profil aussi complexe, ce n'est pas le bon match. Je préfère prendre le temps de trouver le bon profil plutôt que de vous proposer quelqu'un qui ne pourra pas répondre aux besoins réels.'"},
+
+  // ── AESH / AVS ───────────────────────────────────────────────────
+  {prof:"AESH / AVS",trouble:"TDAH",badge:"ideal",
+   realite:"L'AESH est formé à l'accompagnement de proximité, à la gestion des impulsions et à la régulation émotionnelle. C'est le profil le plus adapté pour soutenir sans surcharger.",
+   appel:"'Notre AESH ne fait pas cours — il accompagne. Pour un enfant TDAH, c'est souvent ce dont il a besoin : quelqu'un qui l'aide à rester ancré dans la tâche, qui ne juge pas, qui relance sans pression.'"},
+  {prof:"AESH / AVS",trouble:"TSA",badge:"ideal",
+   realite:"L'AESH est le profil de référence pour le TSA. Formé à l'accompagnement individuel, il connaît les rituels, la gestion sensorielle et les techniques de communication alternative.",
+   appel:"'Pour votre enfant, la priorité c'est que quelqu'un comprenne son mode de fonctionnement et s'y adapte — pas l'inverse. Notre AESH fait exactement ça. Chaque séance est construite autour de lui.'"},
+  {prof:"AESH / AVS",trouble:"DYS",badge:"acceptable",
+   realite:"L'AESH apporte une présence rassurante et peut aider à la mise en travail, mais son expertise pédagogique sur la DYS est variable. L'apport est surtout comportemental et émotionnel.",
+   appel:"'Notre AESH va vraiment aider votre enfant à se mettre au travail sans se bloquer sur ses difficultés. Pour les outils pédagogiques spécifiques à la DYS, on peut combiner avec un spécialiste matière si besoin.'"},
+  {prof:"AESH / AVS",trouble:"HPI",badge:"deconseille",
+   realite:"Le HPI a besoin de stimulation intellectuelle intense. L'AESH n'est pas formé pour ça — et un enfant HPI risque de s'ennuyer et de décrocher encore plus vite.",
+   appel:"'Pour un enfant HPI, l'enjeu c'est le défi intellectuel. L'AESH n'est pas le bon profil ici — je veux lui trouver quelqu'un qui peut vraiment le nourrir sur le plan cognitif.'"},
+  {prof:"AESH / AVS",trouble:"Multi-dys / profil complexe",badge:"ideal",
+   realite:"L'AESH est formé à l'adaptation continue et à la flexibilité. Face à un profil complexe, il ajuste séance par séance sans chercher à 'normaliser' l'élève.",
+   appel:"'Notre AESH n'a pas de méthode rigide — il s'adapte à l'enfant tel qu'il est ce jour-là. Pour un profil complexe qui change d'une semaine à l'autre, c'est précisément ce qu'il faut.'"},
+
+  // ── ÉTUDIANT EN PSYCHOLOGIE ──────────────────────────────────────
+  {prof:"Étudiant en Psychologie",trouble:"TDAH",badge:"acceptable",
+   realite:"Il a les bases théoriques et une vraie empathie, mais son expérience pratique est limitée. Il peut être très efficace si le TDAH n'est pas sévère et si la relation est bonne.",
+   appel:"'Notre étudiant en psychologie comprend le TDAH — pas seulement en théorie, mais il sait pourquoi votre enfant fonctionne comme il fonctionne. Et souvent, cette compréhension change tout à la relation.'"},
+  {prof:"Étudiant en Psychologie",trouble:"TSA",badge:"deconseille",
+   realite:"Malgré sa formation théorique, un étudiant manque d'expérience pratique pour gérer les particularités sensorielles, les crises et la communication atypique du TSA.",
+   appel:"'Je vais être honnête avec vous : pour un profil TSA, j'ai besoin de vous proposer quelqu'un avec plus d'expérience pratique. Ce n'est pas une question de compétence — c'est une question de ce que votre enfant mérite.'"},
+  {prof:"Étudiant en Psychologie",trouble:"DYS",badge:"acceptable",
+   realite:"Sa formation lui donne une bonne lecture des mécanismes DYS et une empathie réelle. Ses outils pédagogiques sont moins rodés, mais son approche bienveillante peut débloquer la confiance.",
+   appel:"'Notre étudiant comprend les mécanismes de la dyslexie et ne va surtout pas mettre votre enfant en difficulté. Sa force, c'est qu'il ne va pas le braquer — et souvent, c'est ça le premier pas.'"},
+  {prof:"Étudiant en Psychologie",trouble:"HPI",badge:"ideal",
+   realite:"La proximité générationnelle combinée à sa formation en psychologie en fait un profil excellent pour le HPI : il peut tenir le rythme intellectuel et comprendre les enjeux émotionnels du profil.",
+   appel:"'Un enfant HPI a besoin de quelqu'un qui le suit vraiment sur le plan intellectuel et qui comprend pourquoi être très intelligent peut aussi être très difficile. Notre étudiant en psychologie, c'est exactement ce profil-là.'"},
+  {prof:"Étudiant en Psychologie",trouble:"Multi-dys / profil complexe",badge:"deconseille",
+   realite:"Un profil complexe requiert une expertise clinique confirmée. L'étudiant, même motivé, n'a pas encore les outils pour naviguer la complexité des interactions entre les différents troubles.",
+   appel:"'Pour un profil aussi complexe, je dois vous proposer quelqu'un avec plus d'expérience. Je préfère prendre le temps de bien choisir plutôt que de vous orienter vers quelqu'un qui ne pourra pas être à la hauteur de la situation.'"},
+];
+
+function MatriceNeuro(){
+  const [filtreProf,setFiltreProf]=useState("Tous");
+  const [filtreTrouble,setFiltreTrouble]=useState("Tous");
+  const [expanded,setExpanded]=useState(null);
+
+  const filtered=NEURO_MATRIX.filter(r=>{
+    if(filtreProf!=="Tous"&&r.prof!==filtreProf) return false;
+    if(filtreTrouble!=="Tous"&&r.trouble!==filtreTrouble) return false;
+    return true;
+  });
+
+  const BADGE={
+    ideal:  {label:"✅ Idéal",     bg:"#D1FAE5",color:"#15803D",border:"#86EFAC"},
+    acceptable:{label:"⚠️ Acceptable",bg:"#FEF9C3",color:"#854D0E",border:"#FDE047"},
+    deconseille:{label:"❌ Déconseillé",bg:"#FEE2E2",color:"#991B1B",border:"#FCA5A5"},
+  };
+
+  return <div>
+    {/* En-tête */}
+    <div style={{marginBottom:18}}>
+      <div style={{fontSize:15,fontWeight:800,color:"#18181B",fontFamily:"'Outfit',sans-serif",marginBottom:3}}>🧠 Matrice Neuroatypiques</div>
+      <div style={{fontSize:12,color:"#71717A"}}>Matching prof × trouble — Réalité + argument commercial</div>
+    </div>
+
+    {/* Légende */}
+    <div style={{display:"flex",gap:8,marginBottom:14,flexWrap:"wrap"}}>
+      {Object.values(BADGE).map(b=><span key={b.label} style={{fontSize:11,padding:"3px 10px",borderRadius:99,background:b.bg,color:b.color,border:`1px solid ${b.border}`,fontWeight:700}}>{b.label}</span>)}
+    </div>
+
+    {/* Filtres */}
+    <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:10,marginBottom:16}}>
+      <div>
+        <div style={{fontSize:11,fontWeight:700,color:"#71717A",marginBottom:6,fontFamily:"'Outfit',sans-serif"}}>Filtrer par professeur</div>
+        <select value={filtreProf} onChange={e=>{setFiltreProf(e.target.value);setExpanded(null);}} style={{width:"100%",fontSize:13,border:"1px solid #E4E4E7",borderRadius:9,padding:"8px 12px",fontFamily:"'Inter',sans-serif",color:"#18181B",background:"#fff"}}>
+          <option>Tous</option>
+          {NEURO_PROFS.map(p=><option key={p}>{p}</option>)}
+        </select>
+      </div>
+      <div>
+        <div style={{fontSize:11,fontWeight:700,color:"#71717A",marginBottom:6,fontFamily:"'Outfit',sans-serif"}}>Filtrer par trouble</div>
+        <select value={filtreTrouble} onChange={e=>{setFiltreTrouble(e.target.value);setExpanded(null);}} style={{width:"100%",fontSize:13,border:"1px solid #E4E4E7",borderRadius:9,padding:"8px 12px",fontFamily:"'Inter',sans-serif",color:"#18181B",background:"#fff"}}>
+          <option>Tous</option>
+          {NEURO_TROUBLES.map(t=><option key={t}>{t}</option>)}
+        </select>
+      </div>
+    </div>
+
+    {/* Compteur */}
+    <div style={{fontSize:11,color:"#A1A1AA",marginBottom:10}}>{filtered.length} combinaison{filtered.length>1?"s":""} affichée{filtered.length>1?"s":""}</div>
+
+    {/* Cartes */}
+    <div style={{display:"flex",flexDirection:"column",gap:9}}>
+      {filtered.map((r,i)=>{
+        const b=BADGE[r.badge];
+        const key=r.prof+r.trouble;
+        const open=expanded===key;
+        const tc=NEURO_COLORS[r.trouble]||"#6B7280";
+        return <div key={key} style={{borderRadius:14,border:`1px solid ${b.border}`,background:b.bg,overflow:"hidden"}}>
+          <button onClick={()=>setExpanded(open?null:key)} style={{width:"100%",padding:"12px 16px",background:"transparent",border:"none",cursor:"pointer",textAlign:"left"}}>
+            <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",gap:10}}>
+              <div style={{display:"flex",alignItems:"center",gap:9,flex:1,minWidth:0}}>
+                <span style={{fontSize:18,flexShrink:0}}>{NEURO_EMOJIS[r.trouble]||"🔷"}</span>
+                <div style={{minWidth:0}}>
+                  <div style={{display:"flex",gap:6,flexWrap:"wrap",alignItems:"center"}}>
+                    <span style={{fontSize:11,fontWeight:800,color:tc,background:tc+"15",borderRadius:99,padding:"2px 8px",whiteSpace:"nowrap"}}>{r.trouble}</span>
+                    <span style={{fontSize:10,color:"#71717A",fontWeight:600}}>×</span>
+                    <span style={{fontSize:11,fontWeight:700,color:"#18181B",fontFamily:"'Outfit',sans-serif"}}>{r.prof}</span>
+                  </div>
+                  <div style={{marginTop:4}}><span style={{fontSize:11,padding:"2px 8px",borderRadius:99,background:b.bg,color:b.color,border:`1px solid ${b.border}`,fontWeight:700}}>{b.label}</span></div>
+                </div>
+              </div>
+              <span style={{fontSize:14,color:b.color,flexShrink:0}}>{open?"▲":"▼"}</span>
+            </div>
+          </button>
+
+          {open&&<div style={{padding:"0 16px 16px"}}>
+            <div style={{height:1,background:b.border,marginBottom:12}}/>
+            {/* Réalité */}
+            <div style={{marginBottom:10}}>
+              <div style={{fontSize:10,fontWeight:800,color:b.color,textTransform:"uppercase",letterSpacing:".08em",marginBottom:5,fontFamily:"'Outfit',sans-serif"}}>📋 La réalité</div>
+              <div style={{fontSize:13,color:"#3F3F46",lineHeight:1.7,background:"rgba(255,255,255,.6)",borderRadius:9,padding:"10px 13px",borderLeft:`3px solid ${b.color}`}}>{r.realite}</div>
+            </div>
+            {/* En appel */}
+            <div>
+              <div style={{fontSize:10,fontWeight:800,color:b.color,textTransform:"uppercase",letterSpacing:".08em",marginBottom:5,fontFamily:"'Outfit',sans-serif"}}>📞 En appel</div>
+              <div style={{display:"flex",gap:8,alignItems:"flex-start"}}>
+                <div style={{flex:1,fontSize:13,color:"#3F3F46",lineHeight:1.7,fontStyle:"italic",background:"rgba(255,255,255,.6)",borderRadius:9,padding:"10px 13px",borderLeft:`3px solid ${b.color}`}}>{r.appel}</div>
+                <CopyBtn text={r.appel}/>
+              </div>
+            </div>
+          </div>}
+        </div>;
+      })}
+      {filtered.length===0&&<div style={{textAlign:"center",padding:28,color:"#A1A1AA",fontSize:13}}>Aucune combinaison pour ces filtres.</div>}
+    </div>
+  </div>;
+}
+
 // ═══════════════════════ 🔦 LANTERNE V5 ═══════════════════════
 function SalesLanterne({stock,setMatchings,user}){
+  const [activeTab,setActiveTab]=useState("prescription");
+  // ── État Prescription ──────────────────────────────────────────
   // Inputs
   const [step,setStep]=useState(1);
   const [prenom,setPrenom]=useState("");
@@ -438,7 +655,22 @@ function SalesLanterne({stock,setMatchings,user}){
   const accompColor=accomp<=3?"#16A34A":accomp>=7?"#DA4F00":"#0B68B4";
 
   // ─── STEP 1: Formulaire ───────────────────────────────────────
-  if(step===1) return <div>
+  if(step===1||step===2) return <div>
+    {/* Onglets */}
+    <div style={{display:"flex",gap:8,marginBottom:20}}>
+      {[["prescription","🔦 Prescription","Diagnostic + Dual Path"],["neuro","🧠 Neuroatypiques","Matrice prof × trouble"]].map(([id,label,sub])=>(
+        <button key={id} onClick={()=>setActiveTab(id)} style={{flex:1,padding:"10px 14px",borderRadius:12,border:`2px solid ${activeTab===id?"#16A34A":"#E4E4E7"}`,background:activeTab===id?"#E1FFED":"#fff",cursor:"pointer",textAlign:"left",transition:"all .15s"}}>
+          <div style={{fontSize:13,fontWeight:800,color:activeTab===id?"#16A34A":"#18181B",fontFamily:"'Outfit',sans-serif"}}>{label}</div>
+          <div style={{fontSize:11,color:"#71717A",marginTop:2}}>{sub}</div>
+        </button>
+      ))}
+    </div>
+
+    {/* Tab Neuroatypiques */}
+    {activeTab==="neuro"&&<MatriceNeuro/>}
+
+    {/* Tab Prescription */}
+    {activeTab==="prescription"&&step===1&&<div>
     <ST emoji="🔦" sub="Le cerveau stratégique de l'application — prescription & argumentation dynamique.">Lanterne Match V5</ST>
 
     {/* Prénom */}
@@ -520,10 +752,23 @@ function SalesLanterne({stock,setMatchings,user}){
 
     {!canAnalyze&&<div style={{fontSize:12,color:"#A1A1AA",marginBottom:10,textAlign:"center"}}>Remplis niveau, profil psychologique et objectif de vie pour continuer</div>}
     <Btn onClick={analyze} disabled={!canAnalyze} full color="#16A34A" style={{padding:"13px",borderRadius:99,fontSize:15}}>🔦 Allumer la Lanterne V5 →</Btn>
-  </div>;
+  </div>}{/* fin step 1 prescription */}
+  </div>;/* fin wrapper onglets step 1 */
 
   // ─── STEP 2: Dual Path + Arguments ───────────────────────────
   if(!portrait) return null;
+  return <div>
+    {/* Onglets (répétés en step 2) */}
+    <div style={{display:"flex",gap:8,marginBottom:20}}>
+      {[["prescription","🔦 Prescription","Diagnostic + Dual Path"],["neuro","🧠 Neuroatypiques","Matrice prof × trouble"]].map(([id,label,sub])=>(
+        <button key={id} onClick={()=>setActiveTab(id)} style={{flex:1,padding:"10px 14px",borderRadius:12,border:`2px solid ${activeTab===id?"#16A34A":"#E4E4E7"}`,background:activeTab===id?"#E1FFED":"#fff",cursor:"pointer",textAlign:"left",transition:"all .15s"}}>
+          <div style={{fontSize:13,fontWeight:800,color:activeTab===id?"#16A34A":"#18181B",fontFamily:"'Outfit',sans-serif"}}>{label}</div>
+          <div style={{fontSize:11,color:"#71717A",marginTop:2}}>{sub}</div>
+        </button>
+      ))}
+    </div>
+    {activeTab==="neuro"&&<MatriceNeuro/>}
+    {activeTab==="prescription"&&<div>
   const idealTyp=portrait[0].typ;
   const idealLabel=getLabel(idealTyp,psycho);
   const idealRefined=refine(idealTyp,matieres);
@@ -655,7 +900,8 @@ ${injectPrenom(args.rebound)}`:"";
       <div style={{fontSize:14,color:"#92400E",fontWeight:600}}>Arguments en cours d'enrichissement pour ce profil</div>
       <div style={{fontSize:12,color:"#71717A",marginTop:4}}>Ce profil sera disponible dans la prochaine mise à jour.</div>
     </C>}
-  </div>;
+    </div>}{/* fin prescription step 2 */}
+  </div>;/* fin wrapper onglets step 2 */
 }
 
 // ═══════════════════════ SALES — autres pages ═══════════════════════
@@ -1757,9 +2003,43 @@ function App(){
 }
 
 ReactDOM.createRoot(document.getElementById('root')).render(<App/>);
-if(window.__clearLoadingInterval) window.__clearLoadingInterval();
-document.getElementById('loading').style.opacity='0';
-setTimeout(()=>document.getElementById('loading').style.display='none',500);
+if(window.__clearLoading) window.__clearLoading();
+</script>
+
+<!-- Lanceur intelligent : cache OU compilation Babel selon disponibilité -->
+<script>
+(function(){
+  function runCompiled(code){
+    var s=document.createElement('script');
+    s.textContent=code;
+    document.body.appendChild(s);
+  }
+
+  function compileAndRun(){
+    var src=document.getElementById('app-source').textContent;
+    var compiled=Babel.transform(src,{presets:['react'],plugins:['transform-class-properties']}).code;
+    // Mise en cache pour les prochaines ouvertures
+    try{
+      localStorage.setItem(window.__CACHE_KEY, compiled);
+      localStorage.setItem(window.__CACHE_VER_KEY, window.__CACHE_VER);
+    }catch(e){}
+    runCompiled(compiled);
+  }
+
+  if(window.__compiledJS){
+    // ⚡ Cache disponible — Babel inutile, démarrage instantané
+    runCompiled(window.__compiledJS);
+  } else {
+    // Première ouverture — charger Babel et compiler (puis mettre en cache)
+    var babelScript=document.createElement('script');
+    babelScript.src='https://cdn.jsdelivr.net/npm/@babel/standalone@7.23.5/babel.min.js';
+    babelScript.onload=compileAndRun;
+    babelScript.onerror=function(){
+      document.getElementById('loading').innerHTML='<div style="color:#fff;font-family:sans-serif;text-align:center;padding:32px"><div style="font-size:32px;margin-bottom:12px">⚠️</div><div style="font-size:18px;font-weight:700">Connexion internet requise</div><div style="font-size:13px;margin-top:8px;opacity:.8">Le site doit être chargé une première fois avec internet pour être mis en cache.</div></div>';
+    };
+    document.body.appendChild(babelScript);
+  }
+})();
 </script>
 </body>
 </html>
