@@ -1,0 +1,1765 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8"/><meta name="viewport" content="width=device-width,initial-scale=1.0"/>
+<title>🏔️ Sherpas Sales Center V5</title>
+<link href="https://fonts.googleapis.com/css2?family=Outfit:wght@400;500;600;700;800;900&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet"/>
+
+<!-- Preload hints : le navigateur télécharge en parallèle dès l'ouverture -->
+<link rel="preload" as="script" href="https://cdnjs.cloudflare.com/ajax/libs/react/18.2.0/umd/react.production.min.js"/>
+<link rel="preload" as="script" href="https://cdnjs.cloudflare.com/ajax/libs/react-dom/18.2.0/umd/react-dom.production.min.js"/>
+<link rel="preload" as="script" href="https://cdn.jsdelivr.net/npm/@babel/standalone@7.23.5/babel.min.js"/>
+<link rel="preload" as="script" href="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.min.js"/>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/react/18.2.0/umd/react.production.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/react-dom/18.2.0/umd/react-dom.production.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/@babel/standalone@7.23.5/babel.min.js"></script>
+<style>
+*{box-sizing:border-box;margin:0;padding:0;}
+body{font-family:'Inter',sans-serif;background:#F8FFF9;color:#18181B;}
+h1,h2,h3,h4,button,label{font-family:'Outfit',sans-serif;}
+input,textarea,select{font-family:'Inter',sans-serif;}
+button:focus{outline:none;}
+::-webkit-scrollbar{width:4px;}
+::-webkit-scrollbar-thumb{background:#C0EAD3;border-radius:2px;}
+#loading{position:fixed;inset:0;background:linear-gradient(135deg,#16A34A,#62E58E);display:flex;flex-direction:column;align-items:center;justify-content:center;z-index:999;transition:opacity .5s;}
+#loading h1{color:#fff;font-family:'Outfit',sans-serif;font-size:26px;font-weight:900;margin-top:14px;}
+#loading p{color:rgba(255,255,255,.75);margin-top:6px;font-size:14px;}
+.spin{width:38px;height:38px;border:3px solid rgba(255,255,255,.3);border-top-color:#fff;border-radius:50%;animation:spin .8s linear infinite;margin-top:18px;}
+@keyframes spin{to{transform:rotate(360deg)}}
+.copy-btn{transition:all .15s;}
+.copy-btn:active{transform:scale(.96);}
+input[type=range]{-webkit-appearance:none;height:6px;border-radius:99px;outline:none;cursor:pointer;}
+input[type=range]::-webkit-slider-thumb{-webkit-appearance:none;width:20px;height:20px;border-radius:50%;background:#16A34A;cursor:pointer;box-shadow:0 2px 6px rgba(22,163,74,.4);}
+</style>
+</head>
+<body>
+<div id="loading">
+  <svg width="52" height="36" viewBox="0 0 52 36" fill="none"><rect x="0" y="0" width="44" height="16" rx="8" fill="white"/><rect x="8" y="20" width="44" height="16" rx="8" fill="rgba(255,255,255,.65)"/></svg>
+  <h1>Les Sherpas</h1>
+  <p id="loading-msg">Chargement en cours…</p>
+  <div class="spin"></div>
+</div>
+<script>
+// Mise à jour du message de chargement pour informer l'utilisateur
+var msgs = ["Chargement des librairies…","Compilation de l'interface…","Préparation de la Lanterne V5…"];
+var mi = 0;
+var msgEl = document.getElementById('loading-msg');
+var interval = setInterval(function(){
+  mi = (mi + 1) % msgs.length;
+  if(msgEl) msgEl.textContent = msgs[mi];
+}, 1500);
+window.__clearLoadingInterval = function(){ clearInterval(interval); };
+</script>
+<div id="root"></div>
+
+<script type="text/babel" data-presets="react" data-plugins="transform-class-properties">
+const {useState,useMemo,useCallback,useEffect,useRef}=React;
+
+// ═══════════════════════ SUPABASE ═══════════════════════
+const SUPABASE_URL = "https://ytksakftecupnlarhpld.supabase.co";
+const SUPABASE_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Inl0a3Nha2Z0ZWN1cG5sYXJocGxkIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzUzMjg2NzYsImV4cCI6MjA5MDkwNDY3Nn0.HZyTIkZhR7jyyxnZmTeW8mX5ESn8NUHDvvPCnMfTaa4";
+const sb = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
+
+// Helper : convertit les noms de colonnes snake_case → camelCase pour les feedbacks
+function rowToFeedback(r){return{id:r.id,date:r.date,auteur:r.auteur,anonyme:r.anonyme,clientTypes:r.client_types||[],objections:r.objections||[],bien:r.bien||[],bloque:r.bloque||[],confiance:r.confiance,suggestions:r.suggestions||""};}
+function rowToMatching(r){return{id:r.id,date:r.date,auteur:r.auteur,idealTyp:r.ideal_typ,chosenTyp:r.chosen_typ,followed:r.followed,niveau:r.niveau,psycho:r.psycho};}
+function rowToStock(r){return{typ:r.typ,dispo:r.dispo,nb:r.nb,note:r.note||""};}
+function rowToSuggestion(r){return{id:r.id,date:r.date,auteur:r.auteur,type:r.type,contenu:r.contenu,statut:r.statut};}
+function rowToDemande(r){return{id:r.id,date:r.date,auteur:r.auteur,cp:r.cp,ville:r.ville,matieres:r.matieres||[],niveau:r.niveau,typo:r.typo||[]};}
+function rowToRentree(r){return{id:r.id,date:r.date,auteur:r.auteur,famille:r.famille,classe:r.classe,matieres:r.matieres||[],rappel:r.rappel,notes:r.notes||""};}
+
+// Composant écran de chargement
+function LoadingOverlay(){return <div style={{position:"fixed",inset:0,background:"rgba(255,255,255,.85)",backdropFilter:"blur(4px)",display:"flex",flexDirection:"column",alignItems:"center",justifyContent:"center",zIndex:9998}}><div style={{width:40,height:40,border:"3px solid #C0EAD3",borderTopColor:"#16A34A",borderRadius:"50%",animation:"spin .8s linear infinite"}}/><div style={{marginTop:14,fontSize:14,fontWeight:600,color:"#16A34A",fontFamily:"'Outfit',sans-serif"}}>Synchronisation Supabase…</div></div>;}
+
+// ═══════════════════════ BRAND ═══════════════════════
+const B={
+  sales:    {primary:"#16A34A",light:"#E1FFED",pale:"#F0FDF4",sidebar:"#0D1F12",accent:"#3BC47F",label:"Sales",    emoji:"📞"},
+  manager:  {primary:"#1E40AF",light:"#EAF9FF",pale:"#EFF6FF",sidebar:"#0C1833",accent:"#3B82F6",label:"Manager",  emoji:"👔"},
+  formateur:{primary:"#DA4F00",light:"#FFF7F0",pale:"#FFF7ED",sidebar:"#2D1000",accent:"#FB923C",label:"Formateur",emoji:"🎓"},
+};
+const Logo=({size=28,white=false})=>(
+  <svg width={size*1.55} height={size} viewBox="0 0 48 31" fill="none">
+    <rect x="0" y="0" width="38" height="13" rx="6.5" fill={white?"rgba(255,255,255,.95)":"#3BC47F"}/>
+    <rect x="10" y="18" width="38" height="13" rx="6.5" fill={white?"rgba(255,255,255,.65)":"#16A34A"}/>
+  </svg>
+);
+
+// ═══════════════════════ MATCHING ENGINE V5 ═══════════════════════
+const PROF_TYPES=["Étudiant grande école","Étudiant université","Professeur EN","AESH","Professeur certifié","Formateur"];
+
+const PSYCH_PROFILES=["Introverti / Réservé","Décrocheur / Démotivé","Compétiteur / Haut Potentiel","Stressé / Anxieux"];
+const VIE_OBJECTIFS=["Remise à niveau","Réussite concours","Méthodologie pure","Excellence académique"];
+const NIVEAUX=["Primaire","Collège","Lycée général","Lycée pro","BTS / IUT","Prépa","Université"];
+const MATIERES=["Maths","Français","Anglais","Physique","Chimie","SVT","Histoire-Géo","Philosophie","Espagnol","Allemand","Économie","Informatique","Autre"];
+const OBJECTIFS_OLD=["Excellence","Remise à niveau","Méthode de travail","Confiance en soi","Prépa examen"];
+
+const RULES={
+  niveau:{"Primaire":{"Professeur EN":35,"Étudiant université":20},"Collège":{"Professeur EN":25,"Étudiant université":20,"Étudiant grande école":10},"Lycée général":{"Étudiant grande école":30,"Professeur certifié":20},"Lycée pro":{"Professeur EN":25,"Formateur":20},"BTS / IUT":{"Étudiant université":30,"Professeur certifié":20},"Prépa":{"Étudiant grande école":45},"Université":{"Étudiant grande école":35,"Étudiant université":25}},
+  psycho:{"Introverti / Réservé":{"Étudiant université":35,"Étudiant grande école":15},"Décrocheur / Démotivé":{"Étudiant université":45,"Étudiant grande école":10},"Compétiteur / Haut Potentiel":{"Étudiant grande école":55,"Professeur certifié":20},"Stressé / Anxieux":{"Étudiant université":30,"Étudiant grande école":20,"AESH":10}},
+  objectif_vie:{"Remise à niveau":{"Professeur EN":45,"Étudiant université":25},"Réussite concours":{"Étudiant grande école":55,"Professeur certifié":25},"Méthodologie pure":{"Formateur":45,"Étudiant grande école":20},"Excellence académique":{"Étudiant grande école":50,"Professeur certifié":25}},
+  accomp_douceur:{"Étudiant université":30,"AESH":25,"Étudiant grande école":10},
+  accomp_fermete:{"Professeur EN":35,"Professeur certifié":25,"Formateur":20},
+};
+
+function computeV5(niveau,psycho,objectif_vie,accomp){
+  const s=Object.fromEntries(PROF_TYPES.map(k=>[k,0]));
+  const add=(r)=>{if(r)Object.entries(r).forEach(([k,v])=>{s[k]=(s[k]||0)+v;});};
+  add(RULES.niveau[niveau]);add(RULES.psycho[psycho]);add(RULES.objectif_vie[objectif_vie]);
+  const douceurW=Math.max(0,(5-accomp)/5);const fermetW=Math.max(0,(accomp-5)/5);
+  Object.entries(RULES.accomp_douceur).forEach(([k,v])=>{s[k]=(s[k]||0)+(v*douceurW);});
+  Object.entries(RULES.accomp_fermete).forEach(([k,v])=>{s[k]=(s[k]||0)+(v*fermetW);});
+  return Object.entries(s).sort((a,b)=>b[1]-a[1]).map(([typ,score])=>({typ,score}));
+}
+
+// PROF LABELS — personality archetypes
+const PROF_LABELS={
+  "Étudiant grande école":{
+    "Introverti / Réservé":"Mentor discret & bienveillant","Décrocheur / Démotivé":"Passeur de flamme","Compétiteur / Haut Potentiel":"Mentor d'excellence","Stressé / Anxieux":"Coach de confiance",default:"Expert académique"
+  },
+  "Étudiant université":{
+    "Introverti / Réservé":"Complice pédagogique","Décrocheur / Démotivé":"Remonteur de motivation","Compétiteur / Haut Potentiel":"Partenaire de progression","Stressé / Anxieux":"Soutien bienveillant",default:"Accompagnateur de proximité"
+  },
+  "Professeur EN":{
+    "Introverti / Réservé":"Cadre sécurisant","Décrocheur / Démotivé":"Pilier de structure","Compétiteur / Haut Potentiel":"Exigeant & formateur","Stressé / Anxieux":"Ancre de stabilité",default:"Référent pédagogique"
+  },
+  "AESH":{"default":"Spécialiste DYS & TDAH"},
+  "Professeur certifié":{"Compétiteur / Haut Potentiel":"Expert haute exigence","Stressé / Anxieux":"Cadre rassurant certifié",default:"Référence académique"},
+  "Formateur":{"default":"Expert méthodes & organisation"},
+};
+function getLabel(typ,psycho){return PROF_LABELS[typ]?.[psycho]||PROF_LABELS[typ]?.default||typ;}
+
+// REFINEMENTS (matières → précision)
+const REFINE={
+  "Étudiant grande école":{
+    "Maths":"étudiant en école d'ingénieurs (X, Centrale, CentraleSupélec, Mines...)","Physique":"étudiant en école d'ingénieurs (X, Centrale, Mines-ParisTech...)","Chimie":"étudiant en école de chimie (ENSC, CPE Lyon, Chimie ParisTech...)","Informatique":"étudiant en école d'ingénieurs informatique (CentraleSupélec, EPITA, INSA...)","SVT":"étudiant en école d'ingénieurs biosciences (AgroParisTech, ENSAT...)","Économie":"étudiant en école de commerce (HEC, ESSEC, ESCP, EDHEC...)","Anglais":"étudiant en école de commerce internationale (Sciences Po, ESSEC...)","Français":"étudiant en ENS / prépa lettres (khâgne, hypokhâgne)","Histoire-Géo":"étudiant en ENS / prépa B/L ou Sciences Po","Philosophie":"étudiant en ENS / prépa lettres (khâgne)",default:"étudiant en grande école (ingénieurs, commerce ou ENS)"
+  },
+  "Étudiant université":{
+    "SVT":"étudiant en médecine / PASS-LAS (1re ou 2e année)","Chimie":"étudiant en pharmacie (Fac de sciences)","Français":"étudiant en lettres modernes (LEA ou LLC)","Histoire-Géo":"étudiant en histoire-géographie (Fac de lettres)","Philosophie":"étudiant en philosophie (Fac de lettres, L2-M2)","Anglais":"étudiant en LEA / LLCER","Espagnol":"étudiant en LEA / LLCER","Économie":"étudiant en économie-gestion (AES / ECO, L2-M2)","Maths":"étudiant en mathématiques (MIAGE, Fac de sciences)","Informatique":"étudiant en informatique (IUT, Licence info, BUT)","Physique":"étudiant en physique-chimie (Fac de sciences)",default:"étudiant universitaire (L2-M2, spécialité adaptée)"
+  },
+  "Professeur EN":{default:"professeur de l'Éducation Nationale (Certifié ou Agrégé)"},
+  "AESH":{default:"accompagnant spécialisé DYS & TDAH (AESH)"},
+  "Professeur certifié":{default:"professeur certifié (CAPES ou Agrégation)"},
+  "Formateur":{default:"formateur professionnel (méthodes & organisation du travail)"},
+};
+function refine(typ,matieres){
+  const map=REFINE[typ];if(!map)return typ;
+  for(const m of(matieres||[]))if(map[m])return map[m];
+  return map.default||typ;
+}
+
+// ═══════ ARGUMENT ENGINE ═══════════════════════════════════════════
+const ARG_ENGINE={
+  "Étudiant grande école":{
+    "Introverti / Réservé":{
+      hook:"Un étudiant en grande école qui excelle mais reste proche va créer la distance de respect dont [Prénom] a besoin pour oser poser ses questions. Pas de jugement, juste de la confiance.",
+      trust:"Il a traversé les mêmes épreuves académiques récemment. Il sait exactement où se trouvent les pièges — et comment les désamorcer sans braquer un élève réservé.",
+      bridge:"Avec [Prénom], il va instaurer un rituel calme et structuré. L'élève réservé progresse quand il se sent dans un espace sûr — c'est exactement ce profil qui crée cet espace.",
+      rebound:"Certains parents pensent qu'un étudiant manque d'autorité. Pour un élève réservé, c'est l'inverse : trop d'autorité ferme les portes. Ce profil les ouvre.",
+    },
+    "Décrocheur / Démotivé":{
+      hook:"Un étudiant en grande école qui a réussi là où votre enfant décroche — c'est la preuve vivante que c'est possible. Il ne va pas sermonner. Il va montrer que ça en vaut la peine.",
+      trust:"Il a réussi des concours très difficiles. Votre enfant va se dire : 'Si lui y est arrivé, peut-être que moi aussi...' C'est le premier moteur de la remotivation.",
+      bridge:"Sa mission avec [Prénom] ne sera pas d'enseigner — ce sera de rallumer la flamme. Un décrocheur a besoin d'une figure inspirante, pas d'un surveillant. Ce profil l'est.",
+      rebound:"On pourrait craindre qu'un étudiant ne sache pas gérer la démotivation. Mais sa proximité générationnelle est un atout : il comprend les codes de [Prénom], pas ceux d'il y a 20 ans.",
+    },
+    "Compétiteur / Haut Potentiel":{
+      hook:"Votre enfant a besoin d'un rival bienveillant — quelqu'un qui va le pousser dans ses retranchements tout en l'aidant à structurer son potentiel. Ce profil est taillé pour ça.",
+      trust:"Il a traversé les grandes classes préparatoires ou les concours les plus sélectifs. Il sait comment transformer un haut potentiel en résultats mesurables. Il parle le même langage que [Prénom].",
+      bridge:"Ensemble, ils vont construire un plan de montée en puissance — pas juste réviser des exercices. [Prénom] va apprendre à compétir intelligemment, à stratégiser, à performer.",
+      rebound:"Un compétiteur peut parfois être difficile à canaliser. Ce profil a l'expérience de la gestion de sa propre ambition — il va apprendre ça à [Prénom], pas juste la matière.",
+    },
+    "Stressé / Anxieux":{
+      hook:"Un étudiant en grande école qui a survécu à la pression des concours comprend viscéralement ce que vit [Prénom]. Il ne va pas minimiser — il va dédramatiser avec des preuves.",
+      trust:"Il a réussi sous pression. Votre enfant va voir que le stress n'est pas un obstacle — c'est une énergie à canaliser. Ce profil l'a fait. Il peut montrer comment.",
+      bridge:"Sa méthode va transformer le stress de [Prénom] en carburant. Il va lui donner des rituels anti-panique, des techniques de mémorisation sous stress, et surtout la preuve que c'est surmontable.",
+      rebound:"Certains parents préfèrent un profil 'rassurant'. Ce profil L'EST — parce qu'il a vécu la même peur et s'en est sorti. C'est la réassurance la plus puissante qui soit.",
+    },
+  },
+  "Étudiant université":{
+    "Introverti / Réservé":{
+      hook:"Un étudiant universitaire proche de l'âge de [Prénom] va créer une relation de pair à pair. L'élève réservé parle plus facilement à quelqu'un qui ne représente pas 'l'autorité'.",
+      trust:"Sa formation spécialisée dans la matière lui donne la légitimité académique. Son accessibilité lui donne la légitimité humaine. C'est la combinaison idéale pour un élève réservé.",
+      bridge:"Il va travailler en douceur, sans mettre [Prénom] en difficulté frontale. L'élève réservé a besoin de progresser sans se sentir exposé — ce profil maîtrise cette approche instinctivement.",
+      rebound:"La question de l'expérience peut se poser. Mais pour un élève réservé, l'empathie générationnelle compte plus que les années d'enseignement. Ce profil a les deux.",
+    },
+    "Décrocheur / Démotivé":{
+      hook:"Un étudiant universitaire va trouver les bons mots pour reconnecter [Prénom] avec sa matière — pas en sermonnant, mais en montrant en quoi ça sert vraiment dans la vraie vie.",
+      trust:"Il utilise ces notions dans ses études aujourd'hui. Il peut faire le lien entre ce que [Prénom] apprend et à quoi ça sert concrètement — c'est le levier le plus puissant contre la démotivation.",
+      bridge:"Sa mission : rendre la matière désirable. Il va partir des centres d'intérêt de [Prénom] pour y raccrocher les notions scolaires. Le décrocheur ne reprend confiance que quand ça fait sens pour lui.",
+      rebound:"On pourrait penser qu'un décrocheur a besoin de fermeté. Souvent c'est l'inverse : il a besoin de sens. Ce profil est parfait pour redonner du sens avant de redonner du cadre.",
+    },
+    "Stressé / Anxieux":{
+      hook:"Un étudiant universitaire bienveillant va créer la bulle de sécurité dont [Prénom] a besoin pour se dépasser sans se mettre en danger. Aucun jugement, beaucoup de soutien.",
+      trust:"Sa formation lui donne la maîtrise technique. Sa proximité lui donne l'empathie. Pour un élève anxieux, savoir que son professeur 'comprend vraiment' est la condition de tout progrès.",
+      bridge:"Il va décomposer chaque difficulté en petites victoires. L'élève stressé reprend confiance avec les succès progressifs — c'est la pédagogie des petits pas, et ce profil la maîtrise.",
+      rebound:"Certains parents veulent 'quelqu'un qui cadre' un élève stressé. Mais le cadre rigide augmente l'anxiété. La bienveillance structure. Ce profil fait les deux.",
+    },
+    "Compétiteur / Haut Potentiel":{
+      hook:"Un étudiant universitaire sérieux va challenger [Prénom] intellectuellement tout en restant accessible. Il peut être le premier rival stimulant dans un environnement sans enjeu de notation.",
+      trust:"Sa spécialisation dans la matière lui permet d'aller en profondeur là où [Prénom] veut aller. Un haut potentiel s'ennuie quand on reste en surface — ce profil sait plonger.",
+      bridge:"Il va explorer les zones avancées de la matière avec [Prénom], créer de la curiosité, ouvrir des portes vers la compréhension profonde. C'est ce qui nourrit un compétiteur intellectuellement.",
+      rebound:"Un compétiteur peut sembler difficile à satisfaire. Mais un étudiant passionné par sa discipline peut l'être autant. Ils vont se tirer vers le haut mutuellement.",
+    },
+    "Introverti / Réservé":{
+      hook:"La proximité générationnelle crée la confiance. [Prénom] va parler à ce profil comme à un grand frère — sans peur d'être jugé, sans honte de ne pas comprendre.",
+      trust:"Formé dans la même matière, il a la maîtrise. Proche par l'âge, il a l'empathie. C'est la combinaison parfaite pour un élève qui a besoin de se sentir compris avant de se sentir guidé.",
+      bridge:"Il va créer une relation de confiance durable. Pour l'élève réservé, la progression n'est possible que quand il se sent à l'aise. Ce profil construit cet espace semaine après semaine.",
+      rebound:"L'expérience pédagogique peut sembler limitée. Mais pour un réservé, l'écoute et la patience comptent plus que les diplômes d'enseignement. Ce profil excelle dans les deux.",
+    },
+  },
+  "Professeur EN":{
+    "Décrocheur / Démotivé":{
+      hook:"Un professeur de l'Éducation Nationale apporte le cadre structurant dont [Prénom] a besoin pour ne plus partir dans tous les sens. La structure, c'est la première étape de la remotivation.",
+      trust:"Certifié ou agrégé, il maîtrise les programmes à la perfection. Il sait exactement où se trouvent les lacunes de [Prénom] et comment les combler de façon méthodique.",
+      bridge:"Il va d'abord poser un cadre clair, puis l'adoucir progressivement au fur et à mesure que [Prénom] reprend confiance. La structure bienveillante est le seul chemin durable pour un décrocheur.",
+      rebound:"Certains pensent qu'un prof 'trop scolaire' va dégoûter davantage un décrocheur. Ce profil sait adapter sa pédagogie — c'est précisément ce qu'on apprend en formation EN.",
+    },
+    "Introverti / Réservé":{
+      hook:"Un professeur EN expérimenté sait créer un cadre sécurisant et prévisible. Pour [Prénom], la prévisibilité est rassurante — il va s'épanouir dans une structure claire et bienveillante.",
+      trust:"Son expérience de terrain lui a appris à lire les élèves silencieux, à les faire parler sans les forcer. Il a vu des dizaines d'élèves réservés s'ouvrir grâce à sa méthode.",
+      bridge:"Il va installer une routine de confiance. [Prénom] va savoir exactement à quoi s'attendre à chaque séance — et c'est dans cette sécurité que l'élève réservé trouve sa voix.",
+      rebound:"On pourrait craindre qu'un professeur EN soit trop 'institutionnel'. Mais son expérience lui a appris à s'adapter à chaque personnalité. C'est la définition même de son métier.",
+    },
+    "Stressé / Anxieux":{
+      hook:"Un professeur EN expérimenté a appris à gérer les élèves sous pression — il connaît les signaux d'alerte et sait comment décompresser la situation avant qu'elle ne devienne bloquante.",
+      trust:"Ses années de terrain lui ont donné une boîte à outils pédagogiques pour gérer l'anxiété scolaire. Il a déjà conduit des dizaines d'élèves stressés vers la réussite.",
+      bridge:"Il va apprendre à [Prénom] à organiser son stress plutôt qu'à le subir. Plans de révision, rituels d'avant-examen, gestion du temps — ce profil transforme le chaos en méthode.",
+      rebound:"Un professeur formel peut sembler intimidant pour un anxieux. Ce profil sait doser : ferme sur la méthode, bienveillant sur l'humain. C'est cette combinaison qui rassure vraiment.",
+    },
+    "Compétiteur / Haut Potentiel":{
+      hook:"Un professeur certifié ou agrégé peut enfin offrir à [Prénom] le niveau d'exigence qu'il cherche. Un haut potentiel s'ennuie avec quelqu'un qui ne le challenge pas — ce profil va le challenger.",
+      trust:"Son titre académique et son expérience pédagogique lui permettent d'aller très loin dans la matière. [Prénom] va trouver en lui un interlocuteur à la hauteur de ses ambitions.",
+      bridge:"Il va explorer les zones avancées, préparer [Prénom] pour les concours ou les examens de haut niveau, et lui donner les clés d'une réflexion véritablement académique.",
+      rebound:"Un compétiteur peut vouloir quelqu'un 'de son niveau'. Ce profil est au-dessus — et c'est exactement ce que [Prénom] a besoin pour progresser vraiment.",
+    },
+  },
+  "AESH":{
+    "Introverti / Réservé":{
+      hook:"Un accompagnant spécialisé AESH sait créer un lien de confiance unique avec les élèves qui ont du mal à s'exprimer. [Prénom] va trouver en lui l'espace pour exister sans pression.",
+      trust:"Sa formation spécifique lui donne les outils pour comprendre les profils atypiques. Il n'improvise pas — il applique des techniques éprouvées pour ouvrir les élèves fermés sur eux-mêmes.",
+      bridge:"Il va adapter chaque exercice au mode de fonctionnement de [Prénom]. Un élève réservé a souvent un mode d'apprentissage différent — et ce profil sait le détecter et l'utiliser.",
+      rebound:"Certains parents pensent que l'AESH c'est 'pour les cas difficiles'. C'est pour les profils atypiques qui ont besoin d'une pédagogie sur-mesure. Et ça fait toute la différence.",
+    },
+    "Stressé / Anxieux":{
+      hook:"Un AESH formé à l'accompagnement des élèves à besoins spécifiques sait exactement comment désamorcer l'anxiété avant qu'elle ne paralyse. Il intervient avant la crise, pas après.",
+      trust:"Sa formation lui donne les protocoles anti-anxiété reconnus par l'Éducation Nationale. Ce n'est pas de l'improvisation — c'est une approche scientifiquement validée.",
+      bridge:"Il va construire avec [Prénom] une boîte à outils personnalisée : techniques de respiration, rituels de démarrage, réorganisation cognitive. L'anxieux devient acteur de sa propre gestion.",
+      rebound:"On pourrait penser qu'un cours particulier 'classique' suffit pour un élève anxieux. Mais si l'anxiété est un frein structurel, seul un accompagnement spécialisé peut vraiment débloquer la situation.",
+    },
+    default:{
+      hook:"Un accompagnant AESH va adapter chaque interaction au profil unique de [Prénom]. Là où les autres enseignent, ce profil accompagne — et c'est souvent ce dont l'élève a réellement besoin.",
+      trust:"Sa spécialisation dans l'accompagnement des profils à besoins spécifiques lui donne une lecture fine des blocages. Il voit ce que les autres ne voient pas.",
+      bridge:"Il va identifier le mode de fonctionnement de [Prénom] et construire un parcours sur-mesure. Pas de copier-coller pédagogique — une approche unique pour une personne unique.",
+      rebound:"La question du 'niveau académique' peut se poser. Ce profil n'est pas là pour le niveau — il est là pour débloquer l'accès à l'apprentissage. Ça vient avant tout le reste.",
+    },
+  },
+  "Professeur certifié":{
+    "Compétiteur / Haut Potentiel":{
+      hook:"Un professeur certifié ou agrégé va pouvoir tenir le rythme intellectuel de [Prénom] et même le dépasser. Un haut potentiel ne s'épanouit qu'avec quelqu'un qu'il respecte — et ce profil impose le respect.",
+      trust:"CAPES ou agrégation : ce sont les titres les plus exigeants de l'enseignement français. Pour un compétiteur, savoir qu'il travaille avec quelqu'un de ce niveau est déjà une source de motivation.",
+      bridge:"Il va emmener [Prénom] vers des niveaux de compréhension que les cours normaux n'atteignent pas. La nuance, la profondeur, la rigueur — c'est le terrain de jeu de ce profil.",
+      rebound:"Un compétiteur peut parfois dépasser ses limites et se décourager. Ce profil sait doser le challenge pour maintenir la motivation sans créer le burn-out.",
+    },
+    "Stressé / Anxieux":{
+      hook:"Un professeur certifié qui maîtrise parfaitement sa matière va transmettre à [Prénom] la sécurité qui vient de la clarté. Quand on sait exactement où on va, le stress diminue.",
+      trust:"Son titre certifie sa maîtrise. Pour les parents et pour l'élève, c'est une réassurance immédiate. [Prénom] va savoir qu'il est entre de bonnes mains — et ça seul réduit l'anxiété.",
+      bridge:"Il va structurer les révisions de façon claire et prévisible. Pour un stressé, l'imprévisibilité est un ennemi — la structure d'un professeur certifié est son meilleur remède.",
+      rebound:"On peut penser qu'un professeur certifié sera trop formel pour un anxieux. Mais sa maîtrise lui permet de ne jamais improviser — et pour un anxieux, ça c'est rassurant.",
+    },
+    default:{
+      hook:"Un professeur certifié apporte le meilleur de l'expertise académique au service de [Prénom]. Sa maîtrise permet de répondre à toutes les questions — y compris les plus pointues.",
+      trust:"CAPES ou agrégation : la France ne délivre pas ces titres facilement. C'est la garantie d'une compétence validée par le système éducatif le plus rigoureux d'Europe.",
+      bridge:"Il va travailler en profondeur, sans jamais esquiver une difficulté. [Prénom] va apprendre à ne pas fuir les zones de difficulté mais à les aborder avec méthode.",
+      rebound:"La question du coût peut se poser. Mais un professeur certifié va plus vite à l'essentiel — moins de séances pour de meilleurs résultats. C'est un investissement, pas une dépense.",
+    },
+  },
+  "Formateur":{
+    "Décrocheur / Démotivé":{
+      hook:"Un formateur professionnel sait comment rendre une matière concrète et utile. Pour [Prénom], qui a perdu le sens, c'est exactement le pont qu'il lui faut entre l'école et la vraie vie.",
+      trust:"Sa formation orientée méthodes lui donne des outils que les enseignants classiques n'ont pas. Il sait comment créer de l'engagement chez quelqu'un qui a décroché.",
+      bridge:"Il va partir des projets et des intérêts de [Prénom] pour raccrocher les notions scolaires à des réalités concrètes. Un décrocheur reprend vie quand il voit à quoi ça sert.",
+      rebound:"Un décrocheur a parfois besoin d'une figure différente — ni parent, ni prof. Ce formateur est ce tiers de confiance qui peut parler sans les codes de l'institution scolaire.",
+    },
+    default:{
+      hook:"Un formateur professionnel va apporter à [Prénom] des outils de méthode et d'organisation qu'aucun cours classique ne lui aurait enseignés.",
+      trust:"Sa formation orientée efficacité et méthodes lui permet d'identifier rapidement les blocages procéduraux — souvent cachés derrière les 'difficultés en maths' ou 'en français'.",
+      bridge:"Il va restructurer la façon de travailler de [Prénom] : planification, mémorisation, gestion du temps. Parfois le problème n'est pas la matière — c'est la méthode. Il va le résoudre.",
+      rebound:"On peut se demander si un formateur remplace un prof. Pas forcément — il le complète. La méthode de travail est souvent le chaînon manquant que les cours classiques ne traitent pas.",
+    },
+  },
+};
+
+function getArgs(typ,psycho){
+  const p=ARG_ENGINE[typ];if(!p)return null;
+  return p[psycho]||p.default||null;
+}
+
+// ═══════════════════════ DATA ═══════════════════════
+const INIT_STOCK=[
+  {typ:"Étudiant grande école",dispo:true,nb:47,note:"Profil le plus demandé"},
+  {typ:"Étudiant université",dispo:true,nb:134,note:"Très disponible toutes zones"},
+  {typ:"Professeur EN",dispo:false,nb:3,note:"Stock très limité"},
+  {typ:"AESH",dispo:false,nb:1,note:"Recrutement en cours"},
+  {typ:"Professeur certifié",dispo:true,nb:12,note:"Disponible Paris/Lyon"},
+  {typ:"Formateur",dispo:true,nb:8,note:"En ligne et domicile"},
+];
+const INIT_SCRIPTS={
+  intro:{title:"Introduction",color:"#16A34A",steps:[{label:"Accroche",text:"Bonjour [Prénom], c'est [Votre prénom] des Sherpas 👋 Avez-vous deux minutes ?"},{label:"Légitimité",text:"Je vous appelle car vous avez demandé des informations sur nos cours particuliers."},{label:"Ordre du jour",text:"Mon objectif est de comprendre votre situation et voir si on peut vous aider. Ça vous convient ?"}]},
+  decouverte:{title:"Découverte",color:"#0B68B4",steps:[{label:"Situation",text:"En quelle classe est votre enfant ? Dans quelle(s) matière(s) rencontre-t-il des difficultés ?"},{label:"Problème",text:"Depuis combien de temps observez-vous ces difficultés ?"},{label:"Implication",text:"Est-ce que cela impacte sa confiance en lui ?"},{label:"Besoin",text:"Idéalement, qu'aimeriez-vous voir changer dans les 2-3 prochains mois ?"}]},
+  pitch:{title:"Présentation",color:"#7C3AED",steps:[{label:"Solution",text:"Les Sherpas met en relation des élèves avec des professeurs triés sur le volet, issus des meilleures grandes écoles 🎓"},{label:"Différenciation",text:"Nos profs sont sélectionnés à moins de 5% ✨ Compatibilité garantie, changement gratuit si besoin."},{label:"Preuve sociale",text:"Des milliers de familles accompagnées, un taux de satisfaction de 98% ⭐"}]},
+  closing:{title:"Closing",color:"#DA4F00",steps:[{label:"Reformulation",text:"Si je résume : vous cherchez un professeur en [matière] pour [prénom], c'est bien ça ?"},{label:"Engagement",text:"On a justement plusieurs profils disponibles. Je peux vous proposer une mise en relation dès cette semaine 🚀"},{label:"Objection finale",text:"Je comprends que vous voulez réfléchir. Qu'est-ce qui vous empêche de vous lancer aujourd'hui ?"},{label:"Closing doux",text:"Parfait ! Je vous envoie un récapitulatif et je vous rappelle [date]. Bonne journée 😊"}]},
+};
+const INIT_OBJECTIONS=[
+  {id:"prix",color:"#E11D48",icon:"💰",label:"C'est trop cher",ref:"Vous trouvez que le tarif ne correspond pas à vos attentes ?",arg:"Ramené à une heure par semaine, c'est moins qu'un abonnement streaming. Et là on parle de l'avenir scolaire de votre enfant 📚",rebond:"Plutôt que le prix, comparons au résultat : si votre enfant passe de 8 à 14 en maths, qu'est-ce que ça vaut pour vous ?"},
+  {id:"qualite",color:"#1E40AF",icon:"🎓",label:"Je préfère un vrai prof",ref:"Vous voulez être sûr que le professeur est vraiment qualifié ?",arg:"Nos Sherpas sont sélectionnés à moins de 5% ✨",rebond:"Un prof qui a réussi le bac il y a 2 ans connaît exactement ce qu'on attend aux examens aujourd'hui."},
+  {id:"timing",color:"#DA4F00",icon:"📅",label:"C'est pas le bon moment",ref:"Vous avez l'impression que ce n'est pas urgent ?",arg:"En accompagnement scolaire, le temps est l'ennemi principal. Chaque semaine sans aide, les lacunes s'accumulent.",rebond:"Quel serait le bon moment ? Et qu'est-ce qui se passe si on attend jusqu'à là ?"},
+  {id:"concurrence",color:"#0B68B4",icon:"🤝",label:"J'ai déjà quelqu'un",ref:"Vous avez déjà un suivi. Qu'est-ce qui vous a poussé à chercher une autre option ?",arg:"Notre valeur ajoutée : suivi des sessions, remplacement facile, diversité de profils 💪",rebond:"Y a-t-il des matières sans suivi actuellement ?"},
+  {id:"reflechir",color:"#71717A",icon:"🤔",label:"Je dois réfléchir",ref:"Quelque chose vous freine encore. Qu'est-ce qui vous manque pour décider ?",arg:"Qu'est-ce qui vous ferait basculer du côté du oui ?",rebond:"Budget, timing ou doutes sur la qualité ?"},
+];
+const INIT_FEEDBACKS=[
+  {id:1,date:"2026-04-02",auteur:"Julien",  anonyme:false,clientTypes:["Parent stressé"],  objections:["Prix"],           bien:["Découverte client"],bloque:["Closing"],                  confiance:7,suggestions:"Script pour parents comparant avec Superprof."},
+  {id:2,date:"2026-04-02",auteur:"Jonathan",anonyme:false,clientTypes:["Parent rationnel"], objections:["Qualité du prof"],bien:["Pitch produit"],      bloque:["Gestion objection qualité"],confiance:5,suggestions:""},
+  {id:3,date:"2026-04-01",auteur:"Julien",  anonyme:false,clientTypes:["Parent pressé"],    objections:["Je dois réfléchir"],bien:["Closing"],           bloque:[],                           confiance:9,suggestions:"Le script de closing est très efficace."},
+  {id:4,date:"2026-04-01",auteur:"Jonathan",anonyme:true, clientTypes:["Parent négociateur"],objections:["Prix","Concurrence"],bien:["Découverte client"],bloque:["Closing"],               confiance:4,suggestions:"Besoin d'un script pour deux objections simultanées."},
+  {id:5,date:"2026-03-31",auteur:"Julien",  anonyme:false,clientTypes:["Parent stressé"],   objections:["Prix"],           bien:["Introduction"],       bloque:["Pitch trop long"],          confiance:6,suggestions:""},
+];
+const INIT_MATCHINGS=[
+  {id:1,date:"2026-04-02",auteur:"Julien",  idealTyp:"Étudiant grande école",chosenTyp:"Étudiant grande école",followed:true, niveau:"Lycée général",psycho:"Compétiteur / Haut Potentiel"},
+  {id:2,date:"2026-04-02",auteur:"Jonathan",idealTyp:"Professeur EN",        chosenTyp:"Étudiant université",  followed:false,niveau:"Collège",      psycho:"Stressé / Anxieux"},
+  {id:3,date:"2026-04-01",auteur:"Julien",  idealTyp:"Étudiant grande école",chosenTyp:"Étudiant grande école",followed:true, niveau:"Prépa",       psycho:"Compétiteur / Haut Potentiel"},
+  {id:4,date:"2026-04-01",auteur:"Jonathan",idealTyp:"AESH",                 chosenTyp:"Professeur EN",        followed:false,niveau:"Collège",      psycho:"Stressé / Anxieux"},
+  {id:5,date:"2026-03-31",auteur:"Julien",  idealTyp:"Étudiant université",  chosenTyp:"Étudiant université",  followed:true, niveau:"Primaire",     psycho:"Introverti / Réservé"},
+];
+const INIT_DEMANDES=[
+  {id:1,date:"2026-04-02",auteur:"Julien",  cp:"92200",ville:"Neuilly",      matieres:["Maths"],    niveau:"Lycée général",typo:["Étudiant grande école"]},
+  {id:2,date:"2026-04-01",auteur:"Jonathan",cp:"75016",ville:"Paris 16e",    matieres:["Français"], niveau:"Collège",      typo:["Professeur EN"]},
+  {id:3,date:"2026-04-01",auteur:"Julien",  cp:"69006",ville:"Lyon",         matieres:["Maths"],    niveau:"Prépa",        typo:["Étudiant grande école"]},
+  {id:4,date:"2026-03-31",auteur:"Jonathan",cp:"13008",ville:"Marseille",    matieres:["Anglais"],  niveau:"Lycée général", typo:["Étudiant université"]},
+];
+const INIT_RENTREE=[
+  {id:1,date:"2026-04-02",auteur:"Julien",  famille:"Dupont", classe:"Terminale",    matieres:["Maths","Physique"],        rappel:"2026-08-15",notes:"Budget validé"},
+  {id:2,date:"2026-04-01",auteur:"Jonathan",famille:"Leclerc",classe:"5ème",         matieres:["Français"],                rappel:"2026-07-01",notes:""},
+  {id:3,date:"2026-04-01",auteur:"Julien",  famille:"Petit",  classe:"2ème prépa",   matieres:["Maths","Physique","Chimie"],rappel:"2026-08-01",notes:"Déjà client"},
+  {id:4,date:"2026-03-31",auteur:"Jonathan",famille:"Bernard",classe:"CE2",          matieres:["Maths","Français"],        rappel:"2026-07-15",notes:"Enfant DYS"},
+];
+const INIT_SUGGESTIONS=[
+  {id:1,date:"2026-04-02",auteur:"Julien",  type:"objection",contenu:"Ajouter réponse à 'Je vais d'abord essayer avec mon enfant'",statut:"pending"},
+  {id:2,date:"2026-04-01",auteur:"Jonathan",type:"script",   contenu:"Script closing pour parents comparant avec Superprof",statut:"pending"},
+];
+function today(){return new Date().toISOString().split("T")[0];}
+function cArr(arr,key){const m={};arr.forEach(f=>(f[key]||[]).forEach(v=>{m[v]=(m[v]||0)+1;}));return Object.entries(m).sort((a,b)=>b[1]-a[1]);}
+
+// ═══════════════════════ COMPTES UTILISATEURS ═══════════════════════
+const PASSWORD="Sherpas2026";
+const USERS=[
+  {id:"julien",   name:"Julien",   prenom:"Julien",   role:"sales",     avatar:"JU",color:"#16A34A",email:"julien@sherpas.com"},
+  {id:"jonathan", name:"Jonathan", prenom:"Jonathan", role:"sales",     avatar:"JO",color:"#0B68B4",email:"jonathan@sherpas.com"},
+  {id:"manager",  name:"Manager",  prenom:"Manager",  role:"manager",   avatar:"M", color:"#7C3AED",email:"manager@sherpas.com"},
+  {id:"formateur",name:"Formateur",prenom:"Formateur",role:"formateur", avatar:"F", color:"#DA4F00",email:"formateur@sherpas.com"},
+];
+
+// ═══════════════════════ UI ATOMS ═══════════════════════
+const C=({children,style={}})=><div style={{background:"#fff",borderRadius:16,border:"1px solid #E4E4E7",padding:20,...style}}>{children}</div>;
+const GC=({children,style={}})=><div style={{background:"linear-gradient(135deg,#16A34A 0%,#62E58E 100%)",borderRadius:16,padding:20,border:"none",...style}}>{children}</div>;
+const Pill=({children,color="#16A34A",bg})=><span style={{display:"inline-flex",alignItems:"center",gap:4,background:bg||color+"18",color,border:`1px solid ${color}35`,borderRadius:99,padding:"4px 12px",fontSize:12,fontWeight:700,fontFamily:"'Outfit',sans-serif"}}>{children}</span>;
+const Btn=({children,onClick,color="#16A34A",outline=false,sm=false,disabled=false,full=false,style={}})=><button onClick={onClick} disabled={disabled} style={{padding:sm?"6px 14px":"10px 20px",borderRadius:99,border:outline?`2px solid ${color}`:"none",background:disabled?"#E4E4E7":outline?"transparent":color,color:disabled?"#A1A1AA":outline?color:"#fff",fontWeight:700,fontSize:sm?12:14,fontFamily:"'Outfit',sans-serif",cursor:disabled?"not-allowed":"pointer",width:full?"100%":"auto",...style}}>{children}</button>;
+const Tog=({value,onChange,color="#16A34A"})=><button onClick={()=>onChange(!value)} style={{width:48,height:26,borderRadius:13,background:value?color:"#E4E4E7",border:"none",cursor:"pointer",position:"relative",flexShrink:0,transition:"background .2s"}}><div style={{width:20,height:20,borderRadius:"50%",background:"#fff",position:"absolute",top:3,left:value?25:3,transition:"left .2s",boxShadow:"0 1px 3px rgba(0,0,0,.15)"}}/></button>;
+const Chips=({options,selected,onChange,color="#16A34A",single=false})=><div style={{display:"flex",flexWrap:"wrap",gap:7}}>{options.map(o=>{const on=single?selected===o:(selected||[]).includes(o);return <button key={o} onClick={()=>single?onChange(on?"":o):onChange(on?(selected||[]).filter(x=>x!==o):[...(selected||[]),o])} style={{padding:"6px 14px",borderRadius:99,border:`2px solid ${on?color:"#E4E4E7"}`,background:on?color+"12":"#fff",color:on?color:"#71717A",fontSize:12,fontWeight:on?700:400,cursor:"pointer",transition:"all .15s"}}>{on?"✓ ":""}{o}</button>;})}</div>;
+const ST=({children,sub,emoji})=><div style={{marginBottom:22}}><h1 style={{fontSize:22,fontWeight:900,color:"#18181B",margin:"0 0 4px",fontFamily:"'Outfit',sans-serif",display:"flex",alignItems:"center",gap:8}}>{emoji&&<span>{emoji}</span>}{children}</h1>{sub&&<p style={{color:"#71717A",margin:0,fontSize:13}}>{sub}</p>}</div>;
+const Stat=({icon,label,value,sub,color="#16A34A"})=><C style={{display:"flex",gap:12,alignItems:"center"}}><div style={{width:46,height:46,borderRadius:14,background:`linear-gradient(135deg,${color},${color}CC)`,display:"flex",alignItems:"center",justifyContent:"center",fontSize:19,flexShrink:0,boxShadow:`0 4px 12px ${color}40`}}>{icon}</div><div><div style={{fontSize:22,fontWeight:900,color:"#18181B",lineHeight:1,fontFamily:"'Outfit',sans-serif"}}>{value}</div><div style={{fontSize:12,fontWeight:600,color:"#3F3F46",marginTop:2}}>{label}</div>{sub&&<div style={{fontSize:11,color:"#A1A1AA",marginTop:1}}>{sub}</div>}</div></C>;
+
+// Copy script helper
+function CopyBtn({text}){
+  const [copied,setCopied]=useState(false);
+  function copy(){navigator.clipboard.writeText(text).then(()=>{setCopied(true);setTimeout(()=>setCopied(false),2000);}).catch(()=>{const ta=document.createElement("textarea");ta.value=text;document.body.appendChild(ta);ta.select();document.execCommand("copy");document.body.removeChild(ta);setCopied(true);setTimeout(()=>setCopied(false),2000);});}
+  return <button onClick={copy} className="copy-btn" style={{padding:"7px 16px",borderRadius:99,border:"none",background:copied?"#16A34A":"#18181B",color:"#fff",fontWeight:700,fontSize:12,cursor:"pointer",fontFamily:"'Outfit',sans-serif",display:"flex",alignItems:"center",gap:6,flexShrink:0}}>{copied?"✓ Copié !":"📋 Copier le script"}</button>;
+}
+
+// ═══════════════════════ SIDEBAR ═══════════════════════
+function Sidebar({role,page,setPage,onExit}){
+  const th=B[role];
+  const menus={
+    sales:[["dash","📊","Tableau de bord"],["lanterne","🔦","Lanterne V5 ✦"],["scripts","📞","Scripts d'appel"],["objections","🛡️","Fiches objections"],["formation","🎓","Formation"],["feedback","💬","Mon feedback"],["demandes","📍","Demandes sans match"],["rentree","🏫","Réservoir Rentrée"]],
+    manager:[["m-vue","🧭","Vue d'ensemble"],["m-matching","⚖️","Idéal vs Manuel"],["m-besoins","🎯","Besoins formation"],["m-rentree","📈","Réservoir Rentrée"],["m-feedback","💬","Feedbacks équipe"],["m-progression","👥","Progression"],["m-users","👤","Utilisateurs"]],
+    formateur:[["f-scripts","📞","Éditeur Scripts"],["f-formations","🎓","Éditeur Formations"],["f-stock","📦","Gestion du Stock"],["f-suggestions","💡","Suggestions équipe"],["f-users","👤","Utilisateurs"]],
+  };
+  return <div style={{width:226,background:th.sidebar,display:"flex",flexDirection:"column",flexShrink:0,height:"100vh",position:"sticky",top:0}}>
+    <div style={{padding:"20px 16px 16px",borderBottom:"1px solid rgba(255,255,255,.08)"}}>
+      <div style={{display:"flex",alignItems:"center",gap:9,marginBottom:9}}><Logo size={20} white={true}/><span style={{fontSize:13,fontWeight:900,color:"#fff",fontFamily:"'Outfit',sans-serif",letterSpacing:"-.02em"}}>LES SHERPAS</span></div>
+      <div style={{display:"flex",alignItems:"center",gap:6}}><span style={{fontSize:10,background:th.accent+"28",color:th.accent,borderRadius:99,padding:"3px 10px",fontWeight:800,fontFamily:"'Outfit',sans-serif",textTransform:"uppercase",letterSpacing:".08em"}}>{th.emoji} {th.label}</span><span style={{fontSize:10,background:"rgba(255,255,255,.1)",color:"rgba(255,255,255,.5)",borderRadius:99,padding:"3px 8px",fontFamily:"'Outfit',sans-serif"}}>V5</span></div>
+    </div>
+    <nav style={{flex:1,padding:"8px 6px",overflowY:"auto"}}>
+      {menus[role].map(([id,icon,label])=><button key={id} onClick={()=>setPage(id)} style={{width:"100%",padding:"9px 10px",borderRadius:9,border:"none",background:page===id?th.accent+"22":"transparent",color:page===id?th.accent:"rgba(255,255,255,.42)",textAlign:"left",cursor:"pointer",display:"flex",alignItems:"center",gap:8,fontSize:12,fontWeight:page===id?700:400,fontFamily:"'Inter',sans-serif",marginBottom:1,borderLeft:`3px solid ${page===id?th.accent:"transparent"}`}}><span style={{fontSize:14}}>{icon}</span>{label}</button>)}
+    </nav>
+    <div style={{padding:"10px 14px",borderTop:"1px solid rgba(255,255,255,.08)"}}><button onClick={onExit} style={{background:"transparent",border:"none",color:"rgba(255,255,255,.3)",fontSize:11,cursor:"pointer",fontFamily:"'Inter',sans-serif"}}>← Changer d'espace</button></div>
+  </div>;
+}
+
+// ═══════════════════════ 🔦 LANTERNE V5 ═══════════════════════
+function SalesLanterne({stock,setMatchings,user}){
+  // Inputs
+  const [step,setStep]=useState(1);
+  const [prenom,setPrenom]=useState("");
+  const [niveau,setNiveau]=useState("");
+  const [matieres,setMatieres]=useState([]);
+  const [psycho,setPsycho]=useState("");
+  const [accomp,setAccomp]=useState(5);
+  const [objectifVie,setObjectifVie]=useState("");
+  const [souhaitParent,setSouhaitParent]=useState("");
+  // Results
+  const [portrait,setPortrait]=useState(null);
+  const [chosenB,setChosenB]=useState("");
+  const [activeOption,setActiveOption]=useState("A");
+  const [scriptGenerated,setScriptGenerated]=useState(false);
+
+  const stockMap=Object.fromEntries(stock.map(s=>[s.typ,s]));
+  const canAnalyze=niveau&&psycho&&objectifVie;
+
+  function analyze(){
+    const p=computeV5(niveau,psycho,objectifVie,accomp);
+    setPortrait(p);
+    setChosenB(stock.find(s=>s.dispo)?.typ||PROF_TYPES[0]);
+    setStep(2);
+    setScriptGenerated(false);
+  }
+  function reset(){setStep(1);setPortrait(null);setChosenB("");setActiveOption("A");setScriptGenerated(false);setPrenom("");setNiveau("");setMatieres([]);setPsycho("");setAccomp(5);setObjectifVie("");setSouhaitParent("");}
+
+  async function generateScript(){
+    setScriptGenerated(true);
+    const idealTyp=portrait[0].typ;
+    const chosenTyp=activeOption==="A"?idealTyp:chosenB;
+    const followed=activeOption==="A";
+    await setMatchings({id:Date.now(),date:today(),auteur:user?.name||"Moi",idealTyp,chosenTyp,followed,niveau,psycho});
+  }
+
+  const accompLabel=accomp<=3?"Douceur & Empathie":accomp>=7?"Fermeté & Cadre":"Équilibre";
+  const accompColor=accomp<=3?"#16A34A":accomp>=7?"#DA4F00":"#0B68B4";
+
+  // ─── STEP 1: Formulaire ───────────────────────────────────────
+  if(step===1) return <div>
+    <ST emoji="🔦" sub="Le cerveau stratégique de l'application — prescription & argumentation dynamique.">Lanterne Match V5</ST>
+
+    {/* Prénom */}
+    <C style={{marginBottom:12}}>
+      <div style={{fontSize:13,fontWeight:700,color:"#18181B",marginBottom:8,fontFamily:"'Outfit',sans-serif"}}>👤 Prénom de l'élève <span style={{fontSize:12,fontWeight:400,color:"#A1A1AA"}}>(optionnel, personnalise les scripts)</span></div>
+      <input value={prenom} onChange={e=>setPrenom(e.target.value)} placeholder="Ex : Lucas, Emma, Thomas..." style={{width:"100%",fontSize:14,border:"1px solid #E4E4E7",borderRadius:10,padding:"10px 14px",boxSizing:"border-box",fontFamily:"'Outfit',sans-serif",fontWeight:600,color:"#18181B"}}/>
+    </C>
+
+    {/* Diagnostic académique */}
+    <C style={{marginBottom:12}}>
+      <div style={{fontSize:14,fontWeight:800,color:"#18181B",marginBottom:16,fontFamily:"'Outfit',sans-serif",display:"flex",alignItems:"center",gap:8}}>📚 Diagnostic académique</div>
+      <div style={{marginBottom:14}}>
+        <div style={{fontSize:12,fontWeight:600,color:"#71717A",marginBottom:8}}>Niveau scolaire <span style={{color:"#E11D48"}}>*</span></div>
+        <Chips options={NIVEAUX} selected={niveau} onChange={setNiveau} color="#16A34A" single={true}/>
+      </div>
+      <div>
+        <div style={{fontSize:12,fontWeight:600,color:"#71717A",marginBottom:4}}>Matière(s)</div>
+        <div style={{fontSize:11,color:"#A1A1AA",marginBottom:8}}>Affine la prescription (médecine, ingénieurs, droit…)</div>
+        <Chips options={MATIERES} selected={matieres} onChange={setMatieres} color="#DA4F00"/>
+      </div>
+    </C>
+
+    {/* Profil psychologique — NOUVEAU */}
+    <C style={{marginBottom:12,borderLeft:"4px solid #16A34A"}}>
+      <div style={{fontSize:14,fontWeight:800,color:"#18181B",marginBottom:4,fontFamily:"'Outfit',sans-serif",display:"flex",alignItems:"center",gap:8}}>🧠 Profil Psychologique <span style={{fontSize:11,background:"#E1FFED",color:"#16A34A",borderRadius:99,padding:"2px 8px",fontWeight:700}}>NOUVEAU V5</span></div>
+      <div style={{fontSize:12,color:"#71717A",marginBottom:12}}>La personnalité de l'élève détermine le profil de prof idéal</div>
+      <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:9}}>
+        {PSYCH_PROFILES.map(p=>{
+          const on=psycho===p;
+          const emoji={"Introverti / Réservé":"🤫","Décrocheur / Démotivé":"😮‍💨","Compétiteur / Haut Potentiel":"🔥","Stressé / Anxieux":"😰"}[p]||"👤";
+          return <button key={p} onClick={()=>setPsycho(on?"":p)} style={{padding:"12px 14px",borderRadius:12,border:`2px solid ${on?"#16A34A":"#E4E4E7"}`,background:on?"#E1FFED":"#FAFAFA",textAlign:"left",cursor:"pointer",transition:"all .15s"}}>
+            <div style={{fontSize:18,marginBottom:4}}>{emoji}</div>
+            <div style={{fontSize:12,fontWeight:700,color:on?"#16A34A":"#3F3F46",fontFamily:"'Outfit',sans-serif"}}>{p}</div>
+          </button>;
+        })}
+      </div>
+    </C>
+
+    {/* Besoin d'accompagnement — NOUVEAU */}
+    <C style={{marginBottom:12}}>
+      <div style={{fontSize:14,fontWeight:800,color:"#18181B",marginBottom:4,fontFamily:"'Outfit',sans-serif",display:"flex",alignItems:"center",gap:8}}>⚖️ Besoin d'accompagnement <span style={{fontSize:11,background:"#E1FFED",color:"#16A34A",borderRadius:99,padding:"2px 8px",fontWeight:700}}>NOUVEAU V5</span></div>
+      <div style={{fontSize:12,color:"#71717A",marginBottom:12}}>Positionnez le curseur selon le besoin de l'élève</div>
+      <input type="range" min={0} max={10} value={accomp} onChange={e=>setAccomp(Number(e.target.value))} style={{width:"100%",accentColor:accompColor,background:`linear-gradient(to right, #16A34A ${accomp*10}%, #E4E4E7 ${accomp*10}%)`}}/>
+      <div style={{display:"flex",justifyContent:"space-between",marginTop:8,alignItems:"center"}}>
+        <span style={{fontSize:12,color:"#16A34A",fontWeight:700}}>🫶 Douceur / Empathie</span>
+        <Pill color={accompColor}>{accompLabel}</Pill>
+        <span style={{fontSize:12,color:"#DA4F00",fontWeight:700}}>💪 Fermeté / Cadre</span>
+      </div>
+    </C>
+
+    {/* Objectif de vie — NOUVEAU */}
+    <C style={{marginBottom:12}}>
+      <div style={{fontSize:14,fontWeight:800,color:"#18181B",marginBottom:4,fontFamily:"'Outfit',sans-serif",display:"flex",alignItems:"center",gap:8}}>🎯 Objectif de vie <span style={{fontSize:11,background:"#E1FFED",color:"#16A34A",borderRadius:99,padding:"2px 8px",fontWeight:700}}>NOUVEAU V5</span></div>
+      <div style={{fontSize:12,color:"#71717A",marginBottom:12}}>Qu'est-ce que cette famille veut vraiment accomplir ?</div>
+      <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:9}}>
+        {[["Remise à niveau","🔄","Rattraper le niveau de la classe"],["Réussite concours","🏆","Intégrer une grande école ou un programme sélectif"],["Méthodologie pure","🗂️","Apprendre à apprendre"],["Excellence académique","⭐","Être le meilleur dans sa matière"]].map(([o,em,desc])=>{
+          const on=objectifVie===o;
+          return <button key={o} onClick={()=>setObjectifVie(on?"":o)} style={{padding:"12px 14px",borderRadius:12,border:`2px solid ${on?"#0B68B4":"#E4E4E7"}`,background:on?"#EFF6FF":"#FAFAFA",textAlign:"left",cursor:"pointer",transition:"all .15s"}}>
+            <div style={{fontSize:18,marginBottom:4}}>{em}</div>
+            <div style={{fontSize:12,fontWeight:700,color:on?"#1E40AF":"#3F3F46",fontFamily:"'Outfit',sans-serif"}}>{o}</div>
+            <div style={{fontSize:11,color:"#A1A1AA",marginTop:2}}>{desc}</div>
+          </button>;
+        })}
+      </div>
+    </C>
+
+    {/* Souhait parent */}
+    <C style={{marginBottom:14}}>
+      <div style={{fontSize:13,fontWeight:700,color:"#18181B",marginBottom:4,fontFamily:"'Outfit',sans-serif"}}>👨‍👩‍👧 Souhait du parent <span style={{fontSize:12,fontWeight:400,color:"#A1A1AA"}}>(optionnel)</span></div>
+      <div style={{fontSize:12,color:"#71717A",marginBottom:10}}>Quel type de prof demande-t-il ? (influence l'option B)</div>
+      <Chips options={["Pas d'avis",...PROF_TYPES]} selected={souhaitParent} onChange={setSouhaitParent} color="#DA4F00" single={true}/>
+    </C>
+
+    {/* Stock */}
+    <C style={{marginBottom:14,background:"#F0FDF4",border:"1px solid #C0EAD3",padding:"12px 16px"}}>
+      <div style={{display:"flex",alignItems:"center",gap:8,marginBottom:7}}><Logo size={15}/><span style={{fontSize:12,fontWeight:700,color:"#15803D",fontFamily:"'Outfit',sans-serif"}}>Stock plateforme Sherpas (temps réel)</span></div>
+      <div style={{display:"flex",flexWrap:"wrap",gap:5}}>{stock.map(s=><span key={s.typ} style={{fontSize:11,padding:"3px 10px",borderRadius:99,background:s.dispo?"#D1FAE5":"#FEE2E2",color:s.dispo?"#15803D":"#B91C1C",fontWeight:600,border:`1px solid ${s.dispo?"#86EFAC":"#FCA5A5"}`}}>{s.dispo?"✓":"✗"} {s.typ} ({s.nb})</span>)}</div>
+    </C>
+
+    {!canAnalyze&&<div style={{fontSize:12,color:"#A1A1AA",marginBottom:10,textAlign:"center"}}>Remplis niveau, profil psychologique et objectif de vie pour continuer</div>}
+    <Btn onClick={analyze} disabled={!canAnalyze} full color="#16A34A" style={{padding:"13px",borderRadius:99,fontSize:15}}>🔦 Allumer la Lanterne V5 →</Btn>
+  </div>;
+
+  // ─── STEP 2: Dual Path + Arguments ───────────────────────────
+  if(!portrait) return null;
+  const idealTyp=portrait[0].typ;
+  const idealLabel=getLabel(idealTyp,psycho);
+  const idealRefined=refine(idealTyp,matieres);
+  const idealDispo=stockMap[idealTyp]?.dispo;
+
+  const chosenTyp=activeOption==="A"?idealTyp:chosenB;
+  const chosenLabel=getLabel(chosenTyp,psycho);
+  const chosenRefined=refine(chosenTyp,matieres);
+  const args=getArgs(chosenTyp,psycho);
+  const nom=prenom||"l'élève";
+
+  function injectPrenom(text){return text.replace(/\[Prénom\]/g,prenom||"votre enfant").replace(/\[nom\]/g,prenom||"votre enfant");}
+
+  const fullScript=args?`🎯 SCRIPT PERSONNALISÉ — ${chosenLabel}
+Profil : ${chosenRefined}
+Élève : ${nom} | Psycho : ${psycho} | Objectif : ${objectifVie}
+
+🪝 LE CROCHET
+${injectPrenom(args.hook)}
+
+🏆 L'ARGUMENT DE CONFIANCE
+${injectPrenom(args.trust)}
+
+🌉 LE PONT PÉDAGOGIQUE
+${injectPrenom(args.bridge)}
+
+↩️ L'ARGUMENT DE REBOND
+${injectPrenom(args.rebound)}`:"";
+
+  return <div>
+    <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:20}}>
+      <div>
+        <h1 style={{fontSize:21,fontWeight:900,color:"#18181B",margin:"0 0 2px",fontFamily:"'Outfit',sans-serif"}}>🔦 Résultat Lanterne V5</h1>
+        <p style={{color:"#71717A",fontSize:13}}>Dual Path · {nom} · {psycho} · {objectifVie}</p>
+      </div>
+      <Btn onClick={reset} outline color="#71717A" sm>← Nouveau</Btn>
+    </div>
+
+    {/* ── DUAL PATH ── */}
+    <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:14,marginBottom:16}}>
+
+      {/* OPTION A — Idéal Sherpas */}
+      <button onClick={()=>setActiveOption("A")} style={{borderRadius:16,border:`2px solid ${activeOption==="A"?"#16A34A":"#E4E4E7"}`,background:activeOption==="A"?"#F0FDF4":"#fff",padding:18,textAlign:"left",cursor:"pointer",transition:"all .2s",position:"relative"}}>
+        {activeOption==="A"&&<div style={{position:"absolute",top:10,right:10,width:22,height:22,borderRadius:"50%",background:"#16A34A",display:"flex",alignItems:"center",justifyContent:"center",color:"#fff",fontSize:13,fontWeight:800}}>✓</div>}
+        <div style={{display:"flex",alignItems:"center",gap:8,marginBottom:10}}>
+          <div style={{fontSize:18}}>✦</div>
+          <Pill color="#16A34A" bg="#E1FFED">OPTION A — L'Idéal Sherpas</Pill>
+        </div>
+        <div style={{fontSize:11,color:"#A1A1AA",marginBottom:4,fontFamily:"'Outfit',sans-serif",textTransform:"uppercase",letterSpacing:".06em"}}>Algorithme Matrice</div>
+        <div style={{fontSize:16,fontWeight:800,color:"#18181B",lineHeight:1.3,fontFamily:"'Outfit',sans-serif",marginBottom:4}}>{idealLabel}</div>
+        <div style={{fontSize:12,color:"#16A34A",fontWeight:600,marginBottom:10}}>↳ {idealRefined}</div>
+        <div style={{display:"flex",flexDirection:"column",gap:3,marginBottom:10}}>
+          {portrait.slice(0,3).map(({typ,score},i)=><div key={typ} style={{display:"flex",alignItems:"center",gap:6}}>
+            <div style={{width:90,fontSize:10,color:"#71717A",whiteSpace:"nowrap",overflow:"hidden",textOverflow:"ellipsis"}}>{typ}</div>
+            <div style={{flex:1,height:4,background:"#E4E4E7",borderRadius:99}}><div style={{height:4,background:i===0?"#16A34A":"#C0EAD3",borderRadius:99,width:`${portrait[0].score>0?(score/portrait[0].score)*100:0}%`}}/></div>
+          </div>)}
+        </div>
+        <div style={{display:"flex",alignItems:"center",gap:6}}>
+          <div style={{width:8,height:8,borderRadius:"50%",background:idealDispo?"#16A34A":"#E11D48"}}/>
+          <span style={{fontSize:11,fontWeight:600,color:idealDispo?"#15803D":"#B91C1C"}}>{idealDispo?`✓ Disponible en stock (${stockMap[idealTyp]?.nb})`:  "✗ Stock indisponible"}</span>
+        </div>
+      </button>
+
+      {/* OPTION B — Choix Sales */}
+      <button onClick={()=>setActiveOption("B")} style={{borderRadius:16,border:`2px solid ${activeOption==="B"?"#0B68B4":"#E4E4E7"}`,background:activeOption==="B"?"#EFF6FF":"#fff",padding:18,textAlign:"left",cursor:"pointer",transition:"all .2s",position:"relative"}}>
+        {activeOption==="B"&&<div style={{position:"absolute",top:10,right:10,width:22,height:22,borderRadius:"50%",background:"#0B68B4",display:"flex",alignItems:"center",justifyContent:"center",color:"#fff",fontSize:13,fontWeight:800}}>✓</div>}
+        <div style={{display:"flex",alignItems:"center",gap:8,marginBottom:10}}>
+          <div style={{fontSize:18}}>🎛️</div>
+          <Pill color="#0B68B4" bg="#DBEAFE">OPTION B — Choix Sales</Pill>
+        </div>
+        <div style={{fontSize:11,color:"#A1A1AA",marginBottom:8,fontFamily:"'Outfit',sans-serif",textTransform:"uppercase",letterSpacing:".06em"}}>Sélection manuelle (stock réel)</div>
+        <select value={chosenB} onChange={e=>setChosenB(e.target.value)} onClick={e=>{e.stopPropagation();setActiveOption("B");}} style={{width:"100%",fontSize:13,fontWeight:700,border:"2px solid #DBEAFE",borderRadius:10,padding:"9px 12px",fontFamily:"'Outfit',sans-serif",color:"#1E40AF",background:"#fff",cursor:"pointer",marginBottom:10}}>
+          {PROF_TYPES.map(t=>{const s=stockMap[t];return <option key={t} value={t}>{s?.dispo?"✓":"✗"} {t} ({s?.nb||0})</option>;})}
+        </select>
+        {chosenB&&<div>
+          <div style={{fontSize:14,fontWeight:800,color:"#18181B",fontFamily:"'Outfit',sans-serif",marginBottom:3}}>{getLabel(chosenB,psycho)}</div>
+          <div style={{fontSize:12,color:"#0B68B4",fontWeight:600,marginBottom:8}}>↳ {refine(chosenB,matieres)}</div>
+          <div style={{display:"flex",alignItems:"center",gap:6}}>
+            <div style={{width:8,height:8,borderRadius:"50%",background:stockMap[chosenB]?.dispo?"#16A34A":"#E11D48"}}/>
+            <span style={{fontSize:11,fontWeight:600,color:stockMap[chosenB]?.dispo?"#15803D":"#B91C1C"}}>{stockMap[chosenB]?.dispo?`✓ Disponible (${stockMap[chosenB]?.nb})`:"✗ Stock indisponible"}</span>
+          </div>
+        </div>}
+      </button>
+    </div>
+
+    {/* ── BOUTON GÉNÉRER ── */}
+    {!scriptGenerated&&<Btn onClick={generateScript} full color="#18181B" style={{padding:"13px",borderRadius:99,fontSize:14,marginBottom:16}}>⚡ Générer le Script Personnalisé — {activeOption==="A"?"Idéal Sherpas":"Choix Sales"}</Btn>}
+
+    {/* ── ARGUMENT GENERATOR ── */}
+    {scriptGenerated&&args&&<div>
+      <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:14}}>
+        <div>
+          <div style={{fontSize:16,fontWeight:800,color:"#18181B",fontFamily:"'Outfit',sans-serif"}}>📜 Script Personnalisé</div>
+          <div style={{fontSize:12,color:"#71717A",marginTop:2}}>{chosenLabel} · {nom} · {psycho}</div>
+        </div>
+        <CopyBtn text={fullScript}/>
+      </div>
+
+      {[
+        {icon:"🪝",label:"LE CROCHET (Hook)",desc:"Pourquoi ce profil va matcher avec la personnalité de l'enfant",text:args.hook,color:"#16A34A",bg:"#F0FDF4",border:"#C0EAD3"},
+        {icon:"🏆",label:"ARGUMENT DE CONFIANCE (Trust)",desc:"Pourquoi ce profil rassure le parent",text:args.trust,color:"#0B68B4",bg:"#EFF6FF",border:"#BFDBFE"},
+        {icon:"🌉",label:"LE PONT PÉDAGOGIQUE",desc:"Le bénéfice concret pour l'élève",text:args.bridge,color:"#7C3AED",bg:"#F5F3FF",border:"#DDD6FE"},
+        {icon:"↩️",label:"ARGUMENT DE REBOND",desc:"Pour contrer l'objection classique liée à ce profil",text:args.rebound,color:"#DA4F00",bg:"#FFF7F0",border:"#FED7AA"},
+      ].map(({icon,label,desc,text,color,bg,border})=>(
+        <C key={label} style={{marginBottom:10,background:bg,border:`1px solid ${border}`,padding:"16px 18px"}}>
+          <div style={{display:"flex",justifyContent:"space-between",alignItems:"flex-start",marginBottom:6}}>
+            <div>
+              <div style={{display:"flex",alignItems:"center",gap:6,marginBottom:3}}>
+                <span style={{fontSize:16}}>{icon}</span>
+                <Pill color={color}>{label}</Pill>
+              </div>
+              <div style={{fontSize:11,color:"#71717A"}}>{desc}</div>
+            </div>
+            <CopyBtn text={injectPrenom(text)}/>
+          </div>
+          <div style={{fontSize:14,color:"#3F3F46",lineHeight:1.75,marginTop:8,fontStyle:"italic",fontFamily:"'Inter',sans-serif",background:"rgba(255,255,255,.7)",borderRadius:10,padding:"12px 14px",borderLeft:`3px solid ${color}`}}>
+            "{injectPrenom(text)}"
+          </div>
+        </C>
+      ))}
+
+      <div style={{marginTop:4}}>
+        <Btn onClick={()=>{setScriptGenerated(false);}} outline color="#71717A" sm>Changer d'option</Btn>
+      </div>
+    </div>}
+
+    {scriptGenerated&&!args&&<C style={{background:"#FFF7F0",border:"1px solid #FED7AA",textAlign:"center",padding:24}}>
+      <div style={{fontSize:20,marginBottom:8}}>🔧</div>
+      <div style={{fontSize:14,color:"#92400E",fontWeight:600}}>Arguments en cours d'enrichissement pour ce profil</div>
+      <div style={{fontSize:12,color:"#71717A",marginTop:4}}>Ce profil sera disponible dans la prochaine mise à jour.</div>
+    </C>}
+  </div>;
+}
+
+// ═══════════════════════ SALES — autres pages ═══════════════════════
+function SalesDash({rentree,user}){
+  const nom=user?.name||"";
+  return <div>
+    <GC style={{marginBottom:16}}>
+      <div style={{display:"flex",justifyContent:"space-between",alignItems:"center"}}>
+        <div>
+          <div style={{display:"flex",alignItems:"center",gap:8,marginBottom:8}}><Logo size={18} white={true}/><Pill color="#fff" bg="rgba(255,255,255,.2)">Sales Center V5</Pill></div>
+          <div style={{fontSize:21,fontWeight:900,color:"#fff",fontFamily:"'Outfit',sans-serif",marginBottom:4}}>Bonjour {nom} 👋</div>
+          <div style={{fontSize:13,color:"rgba(255,255,255,.8)"}}>Le cerveau stratégique de votre vente ✦ Dual Path · Feature-to-Benefit</div>
+        </div>
+        <div style={{fontSize:44}}>🏔️</div>
+      </div>
+    </GC>
+    <div style={{display:"grid",gridTemplateColumns:"repeat(2,1fr)",gap:10,marginBottom:14}}>
+      <Stat icon="🔦" label="Lanterne V5" value="Actif" sub="Dual Path + Arguments" color="#16A34A"/>
+      <Stat icon="🏫" label="Réservoir rentrée" value={rentree.length} sub={`${rentree.length*300}€`} color="#0B68B4"/>
+    </div>
+    <C style={{background:"#F0FDF4",border:"1px solid #C0EAD3",marginBottom:12}}>
+      <div style={{fontWeight:800,fontSize:13,color:"#15803D",marginBottom:10,fontFamily:"'Outfit',sans-serif"}}>✦ Nouveautés V5 — Lanterne augmentée</div>
+      {[["🧠","Profil psychologique","Introverti, Décrocheur, Compétiteur, Stressé"],["⚖️","Curseur accompagnement","Douceur/Empathie ↔ Fermeté/Cadre"],["🎯","Objectif de vie","Remise à niveau, Concours, Méthode, Excellence"],["🔀","Dual Path matching","Option A (Idéal) vs Option B (Manuel)"],["📜","Générateur d'arguments","Hook, Trust, Pont pédagogique, Rebond"],["📋","Bouton Copier","Colle le script directement dans tes outils"]].map(([ic,t,d])=><div key={t} style={{display:"flex",gap:10,marginBottom:9,paddingBottom:9,borderBottom:"1px solid #C0EAD3"}}><span style={{fontSize:16,flexShrink:0}}>{ic}</span><div><div style={{fontSize:12,fontWeight:700,color:"#15803D",fontFamily:"'Outfit',sans-serif"}}>{t}</div><div style={{fontSize:11,color:"#71717A"}}>{d}</div></div></div>)}
+    </C>
+  </div>;
+}
+
+function SalesScripts({scripts}){
+  const [phase,setPhase]=useState("intro");const p=scripts[phase];
+  return <div>
+    <ST emoji="📞" sub="Suis les étapes de l'appel.">Scripts d'appel</ST>
+    <div style={{display:"flex",gap:8,marginBottom:18,flexWrap:"wrap"}}>{Object.entries(scripts).map(([k,v])=><button key={k} onClick={()=>setPhase(k)} style={{padding:"8px 18px",borderRadius:99,border:`2px solid ${phase===k?v.color:"#E4E4E7"}`,background:phase===k?v.color:"#fff",color:phase===k?"#fff":"#71717A",fontWeight:700,fontSize:12,cursor:"pointer",fontFamily:"'Outfit',sans-serif"}}>{v.title}</button>)}</div>
+    <div style={{display:"flex",flexDirection:"column",gap:10}}>{p.steps.map((s,i)=><C key={i} style={{borderLeft:`4px solid ${p.color}`,padding:"14px 18px"}}><div style={{display:"flex",gap:12,alignItems:"flex-start"}}><div style={{width:26,height:26,borderRadius:"50%",background:p.color,display:"flex",alignItems:"center",justifyContent:"center",color:"#fff",fontWeight:800,fontSize:11,flexShrink:0,fontFamily:"'Outfit',sans-serif"}}>{i+1}</div><div><Pill color={p.color}>{s.label}</Pill><div style={{fontSize:13,color:"#3F3F46",lineHeight:1.7,fontStyle:"italic",marginTop:7}}>"{s.text}"</div></div></div></C>)}</div>
+  </div>;
+}
+
+function SalesObjections({objections,setSuggestions}){
+  const [sel,setSel]=useState(null);const [showSug,setShowSug]=useState(false);const [sugText,setSugText]=useState("");const [done,setDone]=useState(false);
+  async function submit(){await setSuggestions({id:Date.now(),date:today(),auteur:"Moi",type:"objection",contenu:sugText,statut:"pending"});setSugText("");setShowSug(false);setDone(true);setTimeout(()=>setDone(false),2000);}
+  return <div>
+    <ST emoji="🛡️" sub="Réponses structurées aux objections.">Fiches objections</ST>
+    {done&&<div style={{marginBottom:10,padding:"11px 14px",borderRadius:10,background:"#D1FAE5",border:"1px solid #86EFAC",fontSize:12,fontWeight:600,color:"#15803D"}}>✅ Suggestion envoyée au Formateur !</div>}
+    <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:10,marginBottom:14}}>{objections.map(o=><button key={o.id} onClick={()=>setSel(sel?.id===o.id?null:o)} style={{padding:"13px 14px",borderRadius:14,border:sel?.id===o.id?`2px solid ${o.color}`:"1px solid #E4E4E7",background:sel?.id===o.id?o.color+"08":"#fff",textAlign:"left",cursor:"pointer",display:"flex",alignItems:"center",gap:10}}><div style={{width:38,height:38,borderRadius:12,background:o.color+"15",display:"flex",alignItems:"center",justifyContent:"center",fontSize:18,flexShrink:0}}>{o.icon}</div><div><div style={{fontSize:12,fontWeight:700,color:"#18181B",fontFamily:"'Outfit',sans-serif"}}>{o.label}</div><div style={{fontSize:11,color:"#A1A1AA",marginTop:1}}>Voir la réponse →</div></div></button>)}</div>
+    {sel&&<C style={{borderTop:`4px solid ${sel.color}`,marginBottom:12}}><div style={{fontSize:15,fontWeight:800,color:"#18181B",marginBottom:14,fontFamily:"'Outfit',sans-serif"}}>{sel.icon} {sel.label}</div>{[["🔄 Reformulation",sel.ref,"#0B68B4"],["💪 Argument",sel.arg,sel.color],["↩️ Rebond",sel.rebond,"#16A34A"]].map(([l,t,c])=><div key={l} style={{background:c+"08",borderRadius:10,padding:"11px 14px",borderLeft:`4px solid ${c}`,marginBottom:9}}><Pill color={c}>{l}</Pill><div style={{fontSize:13,color:"#3F3F46",lineHeight:1.7,fontStyle:"italic",marginTop:6}}>{t}</div></div>)}</C>}
+    <C style={{background:"#F0FDF4",border:"1px solid #C0EAD3",padding:"13px 16px"}}><div style={{display:"flex",justifyContent:"space-between",alignItems:"center"}}><div style={{fontSize:12,fontWeight:600,color:"#15803D",fontFamily:"'Outfit',sans-serif"}}>💡 Une objection manque ?</div><Btn onClick={()=>setShowSug(!showSug)} sm color="#16A34A" outline>Suggérer</Btn></div>{showSug&&<div style={{marginTop:10}}><textarea value={sugText} onChange={e=>setSugText(e.target.value)} placeholder="Décris l'objection et la réponse suggérée..." rows={3} style={{width:"100%",fontSize:12,border:"1px solid #E4E4E7",borderRadius:9,padding:"9px 12px",fontFamily:"'Inter',sans-serif",resize:"vertical",boxSizing:"border-box"}}/><div style={{display:"flex",gap:7,marginTop:7}}><Btn onClick={submit} disabled={!sugText.trim()} sm color="#16A34A">Envoyer</Btn><Btn onClick={()=>setShowSug(false)} outline sm color="#71717A">Annuler</Btn></div></div>}</C>
+  </div>;
+}
+
+const FORMATION_DEFAULT={
+  sales:{title:"Expertise Sales",icon:"📞",color:"#16A34A",modules:[{id:1,title:"Fondamentaux de la vente",duration:"45 min",done:true,score:92,description:"Les bases de la persuasion et du cycle de vente Sherpas"},{id:2,title:"Découverte client — SPIN",duration:"60 min",done:true,score:85,description:"Méthode SPIN : Situation, Problème, Implication, Need-payoff"},{id:3,title:"Cycle de vente Sherpas",duration:"35 min",done:false,description:"Comprendre le tunnel de vente de l'appel au closing"},{id:4,title:"Techniques de closing",duration:"40 min",done:false,description:"Closing assumptif, doux, récapitulatif"}]},
+  education:{title:"Secteur Éducation",icon:"🏫",color:"#0B68B4",modules:[{id:5,title:"Le système scolaire français",duration:"45 min",done:false,description:"De la maternelle au bac : programmes, enjeux, acteurs"},{id:6,title:"DYS, TDAH — troubles d'apprentissage",duration:"50 min",done:false,description:"Identifier et accompagner les profils atypiques"},{id:7,title:"Profils psychologiques élèves",duration:"40 min",done:false,description:"Les 4 profils de la Lanterne : introverti, décrocheur, compétiteur, stressé"},{id:8,title:"La Prépa — codes et attentes",duration:"35 min",done:false,description:"MPSI, PCSI, ECG : comprendre pour mieux prescrire"}]},
+  argumentaires:{title:"Argumentaires V5",icon:"💡",color:"#DA4F00",modules:[{id:9,title:"Feature-to-Benefit : vendre les profils",duration:"55 min",done:false,description:"Transformer les caractéristiques d'un prof en bénéfices concrets"},{id:10,title:"Maîtriser la Matrice Dual Path",duration:"60 min",done:false,description:"Quand suivre l'idéal Matrice, quand pivoter"},{id:11,title:"Recadrer les attentes parentales",duration:"45 min",done:false,description:"Gérer les demandes irréalistes avec confiance et pédagogie"}]},
+};
+
+function SalesFormation({formations}){
+  const F = formations && Object.keys(formations).length > 0 ? formations : FORMATION_DEFAULT;
+  const [tab,setTab]=useState(Object.keys(F)[0]||"sales");
+  const pill=F[tab]||Object.values(F)[0];
+  if(!pill) return <div><ST emoji="🎓">Formation</ST><C style={{textAlign:"center",padding:32,color:"#A1A1AA"}}>Aucune formation disponible.</C></div>;
+  const total=Object.values(F).flatMap(p=>p.modules).length;
+  const done=Object.values(F).flatMap(p=>p.modules).filter(m=>m.done).length;
+  return <div>
+    <ST emoji="🎓" sub="3 piliers + modules de simulation.">Formation</ST>
+    <GC style={{marginBottom:14}}><div style={{display:"flex",justifyContent:"space-between",alignItems:"center"}}><div><Pill color="#fff" bg="rgba(255,255,255,.2)">Progression</Pill><div style={{fontSize:28,fontWeight:900,color:"#fff",marginTop:5,fontFamily:"'Outfit',sans-serif"}}>{total>0?Math.round((done/total)*100):0}%</div><div style={{fontSize:12,color:"rgba(255,255,255,.75)"}}>{done}/{total} modules</div></div><div style={{fontSize:40}}>🎓</div></div></GC>
+    <div style={{display:"flex",gap:8,marginBottom:16,flexWrap:"wrap"}}>{Object.entries(F).map(([k,v])=><button key={k} onClick={()=>setTab(k)} style={{padding:"7px 14px",borderRadius:99,border:`2px solid ${tab===k?v.color:"#E4E4E7"}`,background:tab===k?v.color:"#fff",color:tab===k?"#fff":"#71717A",fontWeight:700,fontSize:12,cursor:"pointer",fontFamily:"'Outfit',sans-serif"}}>{v.icon} {v.title}</button>)}</div>
+    <div style={{display:"flex",flexDirection:"column",gap:9,marginBottom:18}}>{pill.modules.map((m,i)=>{const isDone=m.done,isCurrent=!m.done&&i===pill.modules.filter(x=>x.done).length;return <C key={m.id||i} style={{display:"flex",alignItems:"center",gap:12,padding:"13px 16px",opacity:!isDone&&!isCurrent?.5:1,borderLeft:`4px solid ${isDone?pill.color:isCurrent?pill.color+"70":"#E4E4E7"}`}}><div style={{width:34,height:34,borderRadius:10,background:isDone?pill.color+"18":"#F4F4F5",display:"flex",alignItems:"center",justifyContent:"center",fontSize:14,flexShrink:0}}>{isDone?"✅":isCurrent?"▶️":"🔒"}</div><div style={{flex:1}}><div style={{fontSize:13,fontWeight:700,color:"#18181B",fontFamily:"'Outfit',sans-serif"}}>{m.title}</div><div style={{fontSize:11,color:"#A1A1AA",marginTop:1}}>⏱ {m.duration}</div>{m.description&&<div style={{fontSize:11,color:"#71717A",marginTop:2,fontStyle:"italic"}}>{m.description}</div>}</div>{isDone&&m.score&&<Pill color="#16A34A">{m.score}%</Pill>}{isCurrent&&<Btn sm color={pill.color}>Commencer →</Btn>}</C>;})}
+    </div>
+    <div style={{fontWeight:800,fontSize:14,color:"#18181B",marginBottom:10,fontFamily:"'Outfit',sans-serif"}}>⚡ Training — Simulations</div>
+    <div style={{display:"grid",gridTemplateColumns:"repeat(3,1fr)",gap:10}}>{[["🔬","Labo des Objections","Objections aléatoires avec timer"],["🎯","Le Juste Match","Diagnostic dual path en conditions réelles"],["📞","Roleplay Feature-to-Benefit","Génère le bon argument au bon moment"]].map(([ic,t,d])=><C key={t} style={{cursor:"pointer",borderTop:"4px solid #16A34A",padding:14}}><div style={{fontSize:24,marginBottom:6}}>{ic}</div><div style={{fontSize:12,fontWeight:700,color:"#18181B",marginBottom:3,fontFamily:"'Outfit',sans-serif"}}>{t}</div><div style={{fontSize:11,color:"#71717A",lineHeight:1.5}}>{d}</div></C>)}</div>
+  </div>;
+}
+
+function SalesFeedback({feedbacks,setFeedbacks,setSuggestions,user}){
+  const already=feedbacks.some(f=>f.date===today()&&f.auteur===user?.name);
+  const [anon,setAnon]=useState(false);const [ct,setCt]=useState([]);const [obj,setObj]=useState([]);const [bien,setBien]=useState([]);const [bloque,setBloque]=useState([]);const [conf,setConf]=useState(7);const [sug,setSug]=useState("");const [done,setDone]=useState(false);
+  const CLIENT_T=["Parent stressé","Parent rationnel","Parent indécis","Parent pressé","Parent négociateur","Nouveau prospect"];
+  const OBJ_O=["Prix","Qualité du prof","Timing","Concurrence","Je dois réfléchir","Pas disponible","Autre"];
+  const BIEN_O=["Découverte client","Rapport rapide","Pitch produit","Gestion d'objection","Closing","Reformulation","Dual Path réussi"];
+  const BLOQUE_O=["Closing","Gestion objection prix","Gestion objection qualité","Dual Path difficile","Manque de confiance"];
+  const auteur=anon?"Anonyme":(user?.name||"Moi");
+  async function submit(){
+    const newFb={id:Date.now(),date:today(),auteur,anonyme:anon,clientTypes:ct,objections:obj,bien,bloque,confiance:conf,suggestions:sug};
+    await setFeedbacks(newFb);
+    if(sug.trim()) await setSuggestions({id:Date.now(),date:today(),auteur,type:"feedback",contenu:sug,statut:"pending"});
+    setDone(true);
+  }
+  if(done||already)return <div><ST emoji="💬">Feedback envoyé ✅</ST><C style={{textAlign:"center",padding:40}}><div style={{fontSize:48}}>🎉</div><div style={{fontSize:18,fontWeight:800,color:"#18181B",marginTop:10,fontFamily:"'Outfit',sans-serif"}}>Merci {user?.name} !</div><div style={{fontSize:12,color:"#71717A",marginTop:5}}>Ton retour aide l'équipe à progresser. À demain 👋</div></C></div>;
+  const cc=conf>=8?"#16A34A":conf>=5?"#DA4F00":"#E11D48";const ok=ct.length>0&&obj.length>0;
+  return <div>
+    <ST emoji="💬" sub="Retour quotidien pour améliorer l'équipe.">Mon feedback du jour</ST>
+    <C style={{marginBottom:10,display:"flex",justifyContent:"space-between",alignItems:"center"}}><div><div style={{fontSize:13,fontWeight:700,color:"#18181B",fontFamily:"'Outfit',sans-serif"}}>Soumettre anonymement</div><div style={{fontSize:11,color:"#71717A"}}>Le manager voit les données mais pas ton nom</div></div><Tog value={anon} onChange={setAnon}/></C>
+    {[["👤 Types de clients *",CLIENT_T,ct,setCt,"#16A34A"],["🛡️ Objections difficiles *",OBJ_O,obj,setObj,"#E11D48"],["✅ Ce qui a bien fonctionné",BIEN_O,bien,setBien,"#16A34A"],["🚧 Ce qui a bloqué",BLOQUE_O,bloque,setBloque,"#DA4F00"]].map(([l,opts,val,setter,c])=><C key={l} style={{marginBottom:10}}><div style={{fontSize:13,fontWeight:700,color:"#18181B",marginBottom:9,fontFamily:"'Outfit',sans-serif"}}>{l}</div><Chips options={opts} selected={val} onChange={setter} color={c}/></C>)}
+    <C style={{marginBottom:10}}><div style={{fontSize:13,fontWeight:700,color:"#18181B",marginBottom:3,fontFamily:"'Outfit',sans-serif"}}>🎯 Niveau de confiance</div><div style={{display:"flex",alignItems:"center",gap:14,marginTop:10}}><input type="range" min={1} max={10} value={conf} onChange={e=>setConf(Number(e.target.value))} style={{flex:1,accentColor:cc}}/><div style={{width:42,height:42,borderRadius:"50%",background:cc+"18",border:`2px solid ${cc}`,display:"flex",alignItems:"center",justifyContent:"center",fontWeight:900,fontSize:17,color:cc,flexShrink:0,fontFamily:"'Outfit',sans-serif"}}>{conf}</div></div><div style={{display:"flex",justifyContent:"space-between",marginTop:5}}><span style={{fontSize:11,color:"#A1A1AA"}}>😟</span><span style={{fontSize:11,color:"#A1A1AA"}}>😊</span></div></C>
+    <C style={{marginBottom:14}}><div style={{fontSize:13,fontWeight:700,color:"#18181B",marginBottom:7,fontFamily:"'Outfit',sans-serif"}}>💡 Suggestions</div><textarea value={sug} onChange={e=>setSug(e.target.value)} placeholder="Une idée, un manque, une amélioration…" rows={3} style={{width:"100%",fontSize:12,border:"1px solid #E4E4E7",borderRadius:9,padding:"9px 12px",fontFamily:"'Inter',sans-serif",resize:"vertical",boxSizing:"border-box"}}/></C>
+    {!ok&&<div style={{fontSize:12,color:"#E11D48",marginBottom:7}}>* Complète les champs obligatoires</div>}
+    <Btn onClick={submit} disabled={!ok} full color="#16A34A" style={{padding:"13px",borderRadius:99,fontSize:14}}>Envoyer mon feedback →</Btn>
+  </div>;
+}
+
+function SalesDemandes({demandes,setDemandes,user}){
+  const [cp,setCp]=useState("");const [ville,setVille]=useState("");const [mat,setMat]=useState([]);const [niv,setNiv]=useState("");const [typo,setTypo]=useState([]);const [ok2,setOk2]=useState(false);
+  async function submit(){await setDemandes({id:Date.now(),date:today(),auteur:user?.name||"Moi",cp,ville,matieres:mat,niveau:niv,typo});setCp("");setVille("");setMat([]);setNiv("");setTypo([]);setOk2(true);setTimeout(()=>setOk2(false),2500);}
+  const can=cp.length===5&&mat.length>0&&niv&&typo.length>0;
+  return <div>
+    <ST emoji="📍" sub="Renseigne chaque famille sans match.">Demandes sans match</ST>
+    {ok2&&<div style={{marginBottom:10,padding:"11px 14px",borderRadius:10,background:"#D1FAE5",fontSize:12,fontWeight:600,color:"#15803D"}}>✅ Enregistré !</div>}
+    <C style={{marginBottom:10}}><div style={{fontSize:13,fontWeight:700,color:"#18181B",marginBottom:10,fontFamily:"'Outfit',sans-serif"}}>📍 Localisation</div><div style={{display:"grid",gridTemplateColumns:"1fr 2fr",gap:8}}><div><div style={{fontSize:11,fontWeight:600,color:"#71717A",marginBottom:5}}>Code postal *</div><input value={cp} onChange={e=>setCp(e.target.value.replace(/\D/g,"").slice(0,5))} placeholder="75016" maxLength={5} style={{width:"100%",fontSize:14,fontWeight:700,border:"1px solid #E4E4E7",borderRadius:9,padding:"9px 12px",boxSizing:"border-box",letterSpacing:".08em",fontFamily:"'Outfit',sans-serif"}}/></div><div><div style={{fontSize:11,fontWeight:600,color:"#71717A",marginBottom:5}}>Ville</div><input value={ville} onChange={e=>setVille(e.target.value)} placeholder="Paris 16e" style={{width:"100%",fontSize:13,border:"1px solid #E4E4E7",borderRadius:9,padding:"9px 12px",boxSizing:"border-box",fontFamily:"'Inter',sans-serif"}}/></div></div></C>
+    <C style={{marginBottom:10}}><div style={{fontSize:13,fontWeight:700,color:"#18181B",marginBottom:9,fontFamily:"'Outfit',sans-serif"}}>📚 Matière(s) *</div><Chips options={MATIERES} selected={mat} onChange={setMat} color="#16A34A"/></C>
+    <C style={{marginBottom:10}}><div style={{fontSize:13,fontWeight:700,color:"#18181B",marginBottom:9,fontFamily:"'Outfit',sans-serif"}}>🎓 Niveau *</div><Chips options={NIVEAUX} selected={niv} onChange={setNiv} color="#16A34A" single={true}/></C>
+    <C style={{marginBottom:14}}><div style={{fontSize:13,fontWeight:700,color:"#18181B",marginBottom:9,fontFamily:"'Outfit',sans-serif"}}>👤 Profil souhaité *</div><Chips options={PROF_TYPES} selected={typo} onChange={setTypo} color="#0B68B4"/></C>
+    {!can&&<div style={{fontSize:12,color:"#E11D48",marginBottom:7}}>* Code postal 5 chiffres + matière + niveau + profil requis</div>}
+    <Btn onClick={submit} disabled={!can} full color="#16A34A" style={{padding:"12px",borderRadius:99,fontSize:13}}>Enregistrer →</Btn>
+    {demandes.filter(d=>d.date===today()).length>0&&<div style={{marginTop:16}}><div style={{fontSize:12,fontWeight:700,color:"#3F3F46",marginBottom:7,fontFamily:"'Outfit',sans-serif"}}>Saisies d'aujourd'hui</div>{demandes.filter(d=>d.date===today()).map(d=><C key={d.id} style={{marginBottom:7,padding:"11px 14px",borderLeft:"4px solid #16A34A"}}><div style={{fontSize:12,fontWeight:700,color:"#18181B",fontFamily:"'Outfit',sans-serif"}}>📍 {d.cp} {d.ville&&`— ${d.ville}`}</div><div style={{display:"flex",gap:4,flexWrap:"wrap",marginTop:5}}><Pill color="#16A34A">{d.niveau}</Pill>{(d.matieres||[]).map(m=><Pill key={m} color="#0B68B4">{m}</Pill>)}</div></C>)}</div>}
+  </div>;
+}
+
+function SalesRentree({rentree,setRentree,user}){
+  const [nom,setNom]=useState("");const [classe,setClasse]=useState("");const [mat,setMat]=useState([]);const [rappel,setRappel]=useState("");const [notes,setNotes]=useState("");const [done,setDone]=useState(false);
+  async function submit(){await setRentree({id:Date.now(),date:today(),auteur:user?.name||"Moi",famille:nom,classe,matieres:mat,rappel,notes});setNom("");setClasse("");setMat([]);setRappel("");setNotes("");setDone(true);setTimeout(()=>setDone(false),2500);}
+  const can=nom&&classe&&mat.length>0&&rappel;
+  const CLASSES=["CP","CE1","CE2","CM1","CM2","6ème","5ème","4ème","3ème","Seconde","Première","Terminale","1ère prépa","2ème prépa","BTS 1","BTS 2"];
+  return <div>
+    <ST emoji="🏫" sub="Capture les projets de septembre.">Réservoir Rentrée</ST>
+    {done&&<div style={{marginBottom:10,padding:"11px 14px",borderRadius:10,background:"#D1FAE5",fontSize:12,fontWeight:600,color:"#15803D"}}>✅ Enregistré !</div>}
+    <GC style={{marginBottom:12}}><div style={{display:"flex",justifyContent:"space-between",alignItems:"center"}}><div><Pill color="#fff" bg="rgba(255,255,255,.2)">CA Anticipé Rentrée</Pill><div style={{fontSize:26,fontWeight:900,color:"#fff",marginTop:5,fontFamily:"'Outfit',sans-serif"}}>{(rentree.length*300).toLocaleString()}€</div><div style={{fontSize:11,color:"rgba(255,255,255,.75)"}}>{rentree.length} projets × ~300€/mois</div></div><div style={{fontSize:38}}>🏫</div></div></GC>
+    <C style={{marginBottom:12}}>
+      <div style={{fontSize:13,fontWeight:700,color:"#18181B",marginBottom:12,fontFamily:"'Outfit',sans-serif"}}>Nouveau projet</div>
+      <div style={{marginBottom:10}}><div style={{fontSize:11,fontWeight:600,color:"#71717A",marginBottom:4}}>Nom de la famille *</div><input value={nom} onChange={e=>setNom(e.target.value)} placeholder="Famille Dupont" style={{width:"100%",fontSize:13,border:"1px solid #E4E4E7",borderRadius:9,padding:"8px 12px",boxSizing:"border-box",fontFamily:"'Inter',sans-serif"}}/></div>
+      <div style={{marginBottom:10}}><div style={{fontSize:11,fontWeight:600,color:"#71717A",marginBottom:7}}>Classe à la rentrée *</div><Chips options={CLASSES} selected={classe} onChange={setClasse} color="#16A34A" single={true}/></div>
+      <div style={{marginBottom:10}}><div style={{fontSize:11,fontWeight:600,color:"#71717A",marginBottom:7}}>Matière(s) *</div><Chips options={MATIERES.slice(0,10)} selected={mat} onChange={setMat} color="#16A34A"/></div>
+      <div style={{marginBottom:10}}><div style={{fontSize:11,fontWeight:600,color:"#71717A",marginBottom:4}}>Date de rappel *</div><input type="date" value={rappel} onChange={e=>setRappel(e.target.value)} style={{width:"100%",fontSize:13,border:"1px solid #E4E4E7",borderRadius:9,padding:"8px 12px",boxSizing:"border-box",fontFamily:"'Inter',sans-serif"}}/></div>
+      <div style={{marginBottom:12}}><div style={{fontSize:11,fontWeight:600,color:"#71717A",marginBottom:4}}>Notes</div><textarea value={notes} onChange={e=>setNotes(e.target.value)} rows={2} style={{width:"100%",fontSize:12,border:"1px solid #E4E4E7",borderRadius:9,padding:"8px 12px",fontFamily:"'Inter',sans-serif",resize:"vertical",boxSizing:"border-box"}}/></div>
+      <Btn onClick={submit} disabled={!can} full color="#16A34A" style={{borderRadius:99}}>Enregistrer →</Btn>
+    </C>
+    {rentree.map(r=><C key={r.id} style={{marginBottom:8,padding:"13px 16px",borderLeft:"4px solid #16A34A"}}><div style={{display:"flex",justifyContent:"space-between",alignItems:"flex-start"}}><div><div style={{fontSize:13,fontWeight:700,color:"#18181B",fontFamily:"'Outfit',sans-serif"}}>👨‍👩‍👧 {r.famille} · {r.classe}</div><div style={{display:"flex",gap:4,flexWrap:"wrap",marginTop:5}}>{(r.matieres||[]).map(m=><Pill key={m} color="#16A34A">{m}</Pill>)}</div>{r.notes&&<div style={{fontSize:11,color:"#71717A",marginTop:4,fontStyle:"italic"}}>"{r.notes}"</div>}</div><Pill color="#16A34A">📅 {r.rappel}</Pill></div></C>)}
+  </div>;
+}
+
+// ═══════════════════════ MANAGER ═══════════════════════
+function ManagerVue({feedbacks,rentree,matchings}){
+  const objC=cArr(feedbacks,"objections").slice(0,3);const bloqC=cArr(feedbacks,"bloque").slice(0,3);
+  const avgC=feedbacks.length?Math.round(feedbacks.reduce((s,f)=>s+f.confiance,0)/feedbacks.length*10)/10:0;
+  const cc=avgC>=7?"#16A34A":avgC>=5?"#DA4F00":"#E11D48";
+  const followed=matchings.filter(m=>m.followed).length;const pctFollow=matchings.length?Math.round((followed/matchings.length)*100):0;
+
+  const salesUsers=USERS.filter(u=>u.role==="sales");
+  function salesStats(name){
+    const fb=feedbacks.filter(f=>f.auteur===name);
+    const ma=matchings.filter(m=>m.auteur===name);
+    const avgConf=fb.length?Math.round(fb.reduce((s,f)=>s+f.confiance,0)/fb.length*10)/10:0;
+    const pctIdeal=ma.length?Math.round((ma.filter(m=>m.followed).length/ma.length)*100):0;
+    return {fb:fb.length,ma:ma.length,avgConf,pctIdeal};
+  }
+
+  return <div>
+    <ST emoji="🧭" sub="Vue globale orientée formation — alimentée en temps réel.">Vue d'ensemble</ST>
+
+    {/* KPIs globaux */}
+    <div style={{display:"grid",gridTemplateColumns:"repeat(4,1fr)",gap:10,marginBottom:14}}>
+      <Stat icon="💬" label="Feedbacks" value={feedbacks.length} color="#0B68B4"/>
+      <Stat icon="🎯" label="Confiance moy." value={`${avgC}/10`} color={cc}/>
+      <Stat icon="⚖️" label="Suivi Idéal" value={`${pctFollow}%`} sub={`${followed}/${matchings.length} matchings`} color="#16A34A"/>
+      <Stat icon="📈" label="CA Rentrée" value={`${(rentree.length*300).toLocaleString()}€`} color="#16A34A"/>
+    </div>
+
+    {/* Julien vs Jonathan */}
+    <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:12,marginBottom:14}}>
+      {salesUsers.map(u=>{
+        const st=salesStats(u.name);
+        const cConf=st.avgConf>=7?"#16A34A":st.avgConf>=5?"#DA4F00":"#E11D48";
+        const cIdeal=st.pctIdeal>=70?"#16A34A":st.pctIdeal>=40?"#DA4F00":"#E11D48";
+        return <C key={u.id} style={{borderTop:`4px solid ${u.color}`,padding:16}}>
+          <div style={{display:"flex",alignItems:"center",gap:10,marginBottom:12}}>
+            <div style={{width:38,height:38,borderRadius:"50%",background:u.color,display:"flex",alignItems:"center",justifyContent:"center",fontSize:13,fontWeight:900,color:"#fff",fontFamily:"'Outfit',sans-serif",flexShrink:0}}>{u.avatar}</div>
+            <div><div style={{fontSize:15,fontWeight:800,color:"#18181B",fontFamily:"'Outfit',sans-serif"}}>{u.name}</div><div style={{fontSize:11,color:"#71717A"}}>Sales 📞 · {st.fb} feedback{st.fb>1?"s":""}</div></div>
+          </div>
+          <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:8}}>
+            <div style={{background:cConf+"10",borderRadius:10,padding:"10px 12px",textAlign:"center"}}>
+              <div style={{fontSize:20,fontWeight:900,color:cConf,fontFamily:"'Outfit',sans-serif"}}>{st.avgConf}/10</div>
+              <div style={{fontSize:10,color:"#71717A",marginTop:2}}>Confiance moy.</div>
+            </div>
+            <div style={{background:cIdeal+"10",borderRadius:10,padding:"10px 12px",textAlign:"center"}}>
+              <div style={{fontSize:20,fontWeight:900,color:cIdeal,fontFamily:"'Outfit',sans-serif"}}>{st.pctIdeal}%</div>
+              <div style={{fontSize:10,color:"#71717A",marginTop:2}}>Suivi Idéal</div>
+            </div>
+          </div>
+          <div style={{marginTop:8,height:4,background:"#E4E4E7",borderRadius:99}}><div style={{height:4,background:u.color,borderRadius:99,width:`${st.pctIdeal}%`,transition:"width .5s"}}/></div>
+        </C>;
+      })}
+    </div>
+
+    <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:12,marginBottom:12}}>
+      <C>
+        <div style={{fontWeight:700,fontSize:13,color:"#18181B",marginBottom:12,fontFamily:"'Outfit',sans-serif"}}>🛡️ Objections signalées</div>
+        {objC.map(([l,n],i)=><div key={l} style={{display:"flex",alignItems:"center",gap:8,marginBottom:10}}>
+          <div style={{width:20,height:20,borderRadius:"50%",background:["#E11D48","#DA4F00","#0B68B4"][i]+"18",display:"flex",alignItems:"center",justifyContent:"center",fontSize:10,fontWeight:800,color:["#E11D48","#DA4F00","#0B68B4"][i],fontFamily:"'Outfit',sans-serif"}}>{i+1}</div>
+          <div style={{flex:1}}><div style={{display:"flex",justifyContent:"space-between",marginBottom:2}}><span style={{fontSize:12,fontWeight:600,color:"#3F3F46"}}>{l}</span><span style={{fontSize:11,color:"#A1A1AA"}}>{n}x</span></div><div style={{height:3,background:"#F4F4F5",borderRadius:99}}><div style={{height:3,background:["#E11D48","#DA4F00","#0B68B4"][i],borderRadius:99,width:`${feedbacks.length>0?(n/feedbacks.length)*100:0}%`}}/></div></div>
+        </div>)}
+      </C>
+      <C>
+        <div style={{fontWeight:700,fontSize:13,color:"#18181B",marginBottom:12,fontFamily:"'Outfit',sans-serif"}}>🚧 Blocages récurrents</div>
+        {bloqC.map(([l,n],i)=><div key={l} style={{display:"flex",alignItems:"center",gap:8,marginBottom:10}}>
+          <div style={{width:20,height:20,borderRadius:"50%",background:"#DA4F0018",display:"flex",alignItems:"center",justifyContent:"center",fontSize:10,fontWeight:800,color:"#DA4F00",fontFamily:"'Outfit',sans-serif"}}>{i+1}</div>
+          <div style={{flex:1}}><div style={{display:"flex",justifyContent:"space-between",marginBottom:2}}><span style={{fontSize:12,fontWeight:600,color:"#3F3F46"}}>{l}</span><span style={{fontSize:11,color:"#A1A1AA"}}>{n}x</span></div><div style={{height:3,background:"#F4F4F5",borderRadius:99}}><div style={{height:3,background:"#DA4F00",borderRadius:99,width:`${feedbacks.length>0?(n/feedbacks.length)*100:0}%`}}/></div></div>
+        </div>)}
+      </C>
+    </div>
+
+    <C style={{background:"#F0FDF4",border:"1px solid #C0EAD3"}}>
+      <div style={{display:"flex",alignItems:"center",gap:8,marginBottom:10}}><Logo size={14}/><span style={{fontSize:13,fontWeight:700,color:"#15803D",fontFamily:"'Outfit',sans-serif"}}>Recommandations formation automatiques</span></div>
+      {["Roleplay objection prix — session équipe cette semaine","Atelier closing dual path — basé sur les pivots récents","Module 'Profils psychologiques' — renforcement toute l'équipe"].map((a,i)=><div key={i} style={{marginBottom:9,paddingBottom:9,borderBottom:i<2?"1px solid #C0EAD3":"none",display:"flex",justifyContent:"space-between",alignItems:"center"}}><div style={{fontSize:12,color:"#3F3F46"}}>→ {a}</div><Pill color="#16A34A">Prioritaire</Pill></div>)}
+    </C>
+  </div>;
+}
+
+// ─── MATCHING IDÉAL VS MANUEL — NOUVEAU V5 ────────────────────────
+function ManagerMatching({matchings}){
+  const total=matchings.length;const followed=matchings.filter(m=>m.followed).length;const pivoted=total-followed;const pct=total?Math.round((followed/total)*100):0;
+  // Profils les plus souvent pivotés
+  const pivots={};matchings.filter(m=>!m.followed).forEach(m=>{const k=`${m.idealTyp} → ${m.chosenTyp}`;pivots[k]=(pivots[k]||0)+1;});
+  const pivotRanking=Object.entries(pivots).sort((a,b)=>b[1]-a[1]);
+  // Profils idéaux les plus recommandés
+  const idealCounts={};matchings.forEach(m=>{idealCounts[m.idealTyp]=(idealCounts[m.idealTyp]||0)+1;});
+  const idealRank=Object.entries(idealCounts).sort((a,b)=>b[1]-a[1]);
+  // Psychos qui pivotent le plus
+  const psychoPivots={};matchings.filter(m=>!m.followed).forEach(m=>{psychoPivots[m.psycho]=(psychoPivots[m.psycho]||0)+1;});
+
+  return <div>
+    <ST emoji="⚖️" sub="Analyse de l'écart entre le profil idéal recommandé et le profil réellement vendu.">Idéal vs Manuel</ST>
+
+    {/* Score global */}
+    <GC style={{marginBottom:14}}>
+      <div style={{display:"flex",justifyContent:"space-between",alignItems:"center"}}>
+        <div>
+          <Pill color="#fff" bg="rgba(255,255,255,.2)">Taux de suivi Idéal Sherpas</Pill>
+          <div style={{fontSize:36,fontWeight:900,color:"#fff",marginTop:5,fontFamily:"'Outfit',sans-serif"}}>{pct}%</div>
+          <div style={{fontSize:12,color:"rgba(255,255,255,.8)",marginTop:1}}>{followed} suivis · {pivoted} pivots manuels · {total} matchings total</div>
+        </div>
+        <div style={{textAlign:"right"}}>
+          <div style={{width:72,height:72,borderRadius:"50%",background:"rgba(255,255,255,.15)",display:"flex",alignItems:"center",justifyContent:"center",flexDirection:"column"}}>
+            <div style={{fontSize:22,fontWeight:900,color:"#fff",fontFamily:"'Outfit',sans-serif"}}>{pct}%</div>
+            <div style={{fontSize:10,color:"rgba(255,255,255,.7)"}}>Idéal</div>
+          </div>
+        </div>
+      </div>
+      <div style={{marginTop:12,height:8,background:"rgba(255,255,255,.2)",borderRadius:99}}><div style={{height:8,background:"#fff",borderRadius:99,width:`${pct}%`}}/></div>
+      <div style={{display:"flex",justifyContent:"space-between",marginTop:4}}><span style={{fontSize:11,color:"rgba(255,255,255,.7)"}}>0% — Toujours en pivot</span><span style={{fontSize:11,color:"rgba(255,255,255,.7)"}}>100% — Toujours l'Idéal</span></div>
+    </GC>
+
+    <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:12,marginBottom:12}}>
+      {/* Profils idéaux les + recommandés */}
+      <C>
+        <div style={{fontWeight:700,fontSize:13,color:"#18181B",marginBottom:12,fontFamily:"'Outfit',sans-serif"}}>✦ Profils Idéal les + recommandés</div>
+        {idealRank.map(([typ,n],i)=><div key={typ} style={{display:"flex",alignItems:"center",gap:8,marginBottom:9}}>
+          <span style={{fontSize:14}}>{["🥇","🥈","🥉","🏅","🎖️"][i]||"•"}</span>
+          <div style={{flex:1}}>
+            <div style={{display:"flex",justifyContent:"space-between",marginBottom:2}}><span style={{fontSize:12,fontWeight:600,color:"#3F3F46"}}>{typ}</span><span style={{fontSize:11,color:"#A1A1AA"}}>{n}x</span></div>
+            <div style={{height:3,background:"#F4F4F5",borderRadius:99}}><div style={{height:3,background:"#16A34A",borderRadius:99,width:`${total>0?(n/total)*100:0}%`}}/></div>
+          </div>
+        </div>)}
+      </C>
+
+      {/* Pivots les plus fréquents */}
+      <C>
+        <div style={{fontWeight:700,fontSize:13,color:"#18181B",marginBottom:12,fontFamily:"'Outfit',sans-serif"}}>🔄 Pivots les plus fréquents</div>
+        {pivotRanking.length===0?<div style={{fontSize:12,color:"#A1A1AA"}}>Aucun pivot enregistré — l'équipe suit l'Idéal 🎉</div>:pivotRanking.map(([label,n],i)=><div key={label} style={{marginBottom:10,padding:"9px 11px",background:"#FFF7F0",borderRadius:9,borderLeft:"3px solid #DA4F00"}}>
+          <div style={{display:"flex",justifyContent:"space-between",marginBottom:2}}><span style={{fontSize:11,fontWeight:700,color:"#C2410C",fontFamily:"'Outfit',sans-serif"}}>{label}</span><Pill color="#DA4F00">{n}x</Pill></div>
+        </div>)}
+      </C>
+    </div>
+
+    {/* Psychos qui pivotent */}
+    <C style={{marginBottom:12}}>
+      <div style={{fontWeight:700,fontSize:13,color:"#18181B",marginBottom:12,fontFamily:"'Outfit',sans-serif"}}>🧠 Profils psycho les plus difficiles à matcher</div>
+      {Object.entries(psychoPivots).length===0?<div style={{fontSize:12,color:"#A1A1AA"}}>Aucune donnée de pivot disponible.</div>:Object.entries(psychoPivots).sort((a,b)=>b[1]-a[1]).map(([ps,n])=><div key={ps} style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:9,paddingBottom:9,borderBottom:"1px solid #F4F4F5"}}>
+        <div style={{fontSize:13,color:"#3F3F46",fontWeight:600}}>{ps}</div>
+        <Pill color="#E11D48">{n} pivot{n>1?"s":""}</Pill>
+      </div>)}
+    </C>
+
+    {/* Historique */}
+    <C>
+      <div style={{fontWeight:700,fontSize:13,color:"#18181B",marginBottom:12,fontFamily:"'Outfit',sans-serif"}}>📋 Historique des matchings</div>
+      <div style={{display:"flex",flexDirection:"column",gap:8}}>
+        {matchings.slice(0,8).map(m=><div key={m.id} style={{display:"flex",alignItems:"center",gap:10,padding:"9px 12px",borderRadius:10,background:m.followed?"#F0FDF4":"#FFF7F0",border:`1px solid ${m.followed?"#C0EAD3":"#FED7AA"}`}}>
+          <div style={{width:22,height:22,borderRadius:"50%",background:m.followed?"#16A34A":"#DA4F00",display:"flex",alignItems:"center",justifyContent:"center",color:"#fff",fontSize:11,flexShrink:0}}>{m.followed?"✓":"⚡"}</div>
+          <div style={{flex:1}}>
+            <div style={{fontSize:12,fontWeight:700,color:"#18181B",fontFamily:"'Outfit',sans-serif"}}>{m.auteur} · {m.psycho}</div>
+            <div style={{fontSize:11,color:"#71717A",marginTop:1}}>{m.followed?`Idéal suivi : ${m.idealTyp}`:`Pivot : ${m.idealTyp} → ${m.chosenTyp}`}</div>
+          </div>
+          <span style={{fontSize:10,color:"#A1A1AA"}}>{m.date}</span>
+        </div>)}
+      </div>
+    </C>
+  </div>;
+}
+
+function ManagerBesoins({feedbacks}){
+  const cc=cArr(feedbacks,"clientTypes");const bc=cArr(feedbacks,"bien").slice(0,4);const sugs=feedbacks.filter(f=>f.suggestions&&f.suggestions.trim()!=="");
+  return <div>
+    <ST emoji="🎯" sub="Ce dont l'équipe a besoin pour progresser.">Besoins formation</ST>
+    <C style={{marginBottom:12}}><div style={{fontWeight:700,fontSize:13,color:"#18181B",marginBottom:10,fontFamily:"'Outfit',sans-serif"}}>👤 Profils clients les + rencontrés</div><div style={{display:"flex",flexWrap:"wrap",gap:7}}>{cc.map(([l,n])=><div key={l} style={{padding:"6px 12px",borderRadius:99,background:"#E1FFED",border:"1px solid #C0EAD3",display:"flex",alignItems:"center",gap:6}}><span style={{fontSize:12,fontWeight:700,color:"#15803D",fontFamily:"'Outfit',sans-serif"}}>{l}</span><span style={{fontSize:10,background:"#16A34A",color:"#fff",borderRadius:99,padding:"1px 7px",fontWeight:700,fontFamily:"'Outfit',sans-serif"}}>{n}</span></div>)}</div></C>
+    <C style={{marginBottom:12}}><div style={{fontWeight:700,fontSize:13,color:"#18181B",marginBottom:10,fontFamily:"'Outfit',sans-serif"}}>✅ Points forts à capitaliser</div>{bc.map(([l,n],i)=><div key={l} style={{display:"flex",alignItems:"center",gap:8,marginBottom:9}}><span style={{fontSize:16}}>{["🥇","🥈","🥉","🏅"][i]}</span><div style={{flex:1}}><div style={{display:"flex",justifyContent:"space-between",marginBottom:2}}><span style={{fontSize:12,fontWeight:600,color:"#3F3F46"}}>{l}</span><span style={{fontSize:11,color:"#16A34A",fontWeight:700}}>{n}×</span></div><div style={{height:3,background:"#F4F4F5",borderRadius:99}}><div style={{height:3,background:"#16A34A",borderRadius:99,width:`${feedbacks.length>0?(n/feedbacks.length)*100:0}%`}}/></div></div></div>)}</C>
+    <C><div style={{fontWeight:700,fontSize:13,color:"#18181B",marginBottom:10,fontFamily:"'Outfit',sans-serif"}}>💡 Suggestions remontées</div>{sugs.length===0?<div style={{fontSize:12,color:"#A1A1AA"}}>Aucune suggestion.</div>:sugs.map(f=><div key={f.id} style={{marginBottom:9,padding:"10px 12px",background:"#F8FFF9",borderRadius:9,borderLeft:"3px solid #16A34A"}}><div style={{fontSize:10,color:"#A1A1AA",marginBottom:2}}>{f.auteur} · {f.date}</div><div style={{fontSize:12,color:"#3F3F46",fontStyle:"italic"}}>"{f.suggestions}"</div></div>)}</C>
+  </div>;
+}
+
+function ManagerRentree({rentree}){
+  const total=rentree.length*300;const matieres=cArr(rentree,"matieres");const rappels=[...rentree].sort((a,b)=>(a.rappel||"").localeCompare(b.rappel||""));
+  return <div>
+    <ST emoji="📈" sub="Pipeline de rentrée et CA anticipé.">Réservoir Rentrée</ST>
+    <GC style={{marginBottom:12}}><div style={{display:"flex",justifyContent:"space-between",alignItems:"center"}}><div><Pill color="#fff" bg="rgba(255,255,255,.2)">CA Anticipé Rentrée</Pill><div style={{fontSize:32,fontWeight:900,color:"#fff",marginTop:4,fontFamily:"'Outfit',sans-serif"}}>{total.toLocaleString()}€</div><div style={{fontSize:11,color:"rgba(255,255,255,.75)"}}>{rentree.length} projets × 300€/mois</div></div><div style={{fontSize:36}}>📈</div></div></GC>
+    <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:12,marginBottom:12}}>
+      <C><div style={{fontWeight:700,fontSize:13,color:"#18181B",marginBottom:10,fontFamily:"'Outfit',sans-serif"}}>📚 Matières + demandées</div>{matieres.slice(0,5).map(([m,n],i)=><div key={m} style={{display:"flex",alignItems:"center",gap:8,marginBottom:8}}><span style={{fontSize:14}}>{["🥇","🥈","🥉","🏅","🎖️"][i]}</span><div style={{flex:1}}><div style={{display:"flex",justifyContent:"space-between",marginBottom:2}}><span style={{fontSize:12,fontWeight:600,color:"#3F3F46"}}>{m}</span><span style={{fontSize:11,color:"#16A34A",fontWeight:700}}>{n}×</span></div><div style={{height:3,background:"#F4F4F5",borderRadius:99}}><div style={{height:3,background:"#16A34A",borderRadius:99,width:`${rentree.length>0?(n/rentree.length)*100:0}%`}}/></div></div></div>)}</C>
+      <C><div style={{fontWeight:700,fontSize:13,color:"#18181B",marginBottom:10,fontFamily:"'Outfit',sans-serif"}}>📅 Rappels à venir</div>{rappels.map(r=><div key={r.id} style={{marginBottom:9,paddingBottom:9,borderBottom:"1px solid #F4F4F5",display:"flex",justifyContent:"space-between",alignItems:"center"}}><div><div style={{fontSize:12,fontWeight:700,color:"#18181B",fontFamily:"'Outfit',sans-serif"}}>{r.famille}</div><div style={{fontSize:11,color:"#71717A"}}>{r.classe}</div></div><Pill color="#16A34A">📅 {r.rappel}</Pill></div>)}</C>
+    </div>
+    <C style={{background:"#F0FDF4",border:"1px solid #C0EAD3"}}><div style={{fontWeight:700,fontSize:13,color:"#15803D",marginBottom:8,fontFamily:"'Outfit',sans-serif"}}>💰 Simulation CA</div><div style={{display:"grid",gridTemplateColumns:"repeat(3,1fr)",gap:8}}>{[["Pessimiste",Math.round(total*.5),"#E11D48"],["Réaliste",Math.round(total*.75),"#DA4F00"],["Optimiste",total,"#16A34A"]].map(([l,v,c])=><div key={l} style={{padding:"10px 12px",background:"#fff",borderRadius:10,border:`1px solid ${c}25`}}><div style={{fontSize:10,color:"#71717A",marginBottom:3,fontFamily:"'Outfit',sans-serif"}}>{l} (50/75/100%)</div><div style={{fontSize:16,fontWeight:900,color:c,fontFamily:"'Outfit',sans-serif"}}>{v.toLocaleString()}€</div></div>)}</div></C>
+  </div>;
+}
+
+function ManagerFeedbacks({feedbacks}){
+  const [filter,setFilter]=useState("tous");
+  const filtered=
+    filter==="julien"   ? feedbacks.filter(f=>f.auteur==="Julien") :
+    filter==="jonathan" ? feedbacks.filter(f=>f.auteur==="Jonathan") :
+    filter==="anonymes" ? feedbacks.filter(f=>f.anonyme) :
+    feedbacks;
+
+  function getUserColor(auteur){
+    const u=USERS.find(x=>x.name===auteur);
+    return u?u.color:"#71717A";
+  }
+  function getUserAvatar(auteur,anonyme){
+    if(anonyme) return "?";
+    const u=USERS.find(x=>x.name===auteur);
+    return u?u.avatar:auteur[0];
+  }
+
+  const tabs=[
+    ["tous","Tous 📋",feedbacks.length],
+    ["julien","Julien 📞",feedbacks.filter(f=>f.auteur==="Julien").length],
+    ["jonathan","Jonathan 📞",feedbacks.filter(f=>f.auteur==="Jonathan").length],
+    ["anonymes","Anonymes 🕵️",feedbacks.filter(f=>f.anonyme).length],
+  ];
+
+  return <div>
+    <ST emoji="💬" sub="Tous les feedbacks de l'équipe — filtrables par Sales.">Feedbacks équipe</ST>
+
+    {/* Stats rapides */}
+    <div style={{display:"grid",gridTemplateColumns:"repeat(4,1fr)",gap:10,marginBottom:14}}>
+      {USERS.filter(u=>u.role==="sales").map(u=>{
+        const mine=feedbacks.filter(f=>f.auteur===u.name);
+        const avgC=mine.length?Math.round(mine.reduce((s,f)=>s+f.confiance,0)/mine.length*10)/10:0;
+        const cc=avgC>=7?"#16A34A":avgC>=5?"#DA4F00":"#E11D48";
+        return <C key={u.id} style={{padding:14,textAlign:"center",borderTop:`3px solid ${u.color}`}}>
+          <div style={{width:32,height:32,borderRadius:"50%",background:u.color,display:"flex",alignItems:"center",justifyContent:"center",fontSize:11,fontWeight:900,color:"#fff",fontFamily:"'Outfit',sans-serif",margin:"0 auto 6px"}}>{u.avatar}</div>
+          <div style={{fontSize:18,fontWeight:900,color:cc,fontFamily:"'Outfit',sans-serif"}}>{avgC}/10</div>
+          <div style={{fontSize:11,color:"#71717A",marginTop:1}}>{u.name} · confiance</div>
+          <div style={{fontSize:10,color:"#A1A1AA"}}>{mine.length} feedback{mine.length>1?"s":""}</div>
+        </C>;
+      })}
+      {(()=>{const avgC=feedbacks.length?Math.round(feedbacks.reduce((s,f)=>s+f.confiance,0)/feedbacks.length*10)/10:0;const cc=avgC>=7?"#16A34A":avgC>=5?"#DA4F00":"#E11D48";return <C key="avg" style={{padding:14,textAlign:"center",borderTop:"3px solid #7C3AED"}}><div style={{fontSize:22,marginBottom:6}}>📊</div><div style={{fontSize:18,fontWeight:900,color:cc,fontFamily:"'Outfit',sans-serif"}}>{avgC}/10</div><div style={{fontSize:11,color:"#71717A",marginTop:1}}>Moyenne équipe</div><div style={{fontSize:10,color:"#A1A1AA"}}>{feedbacks.length} feedbacks total</div></C>;})()}
+      {(()=>{const anon=feedbacks.filter(f=>f.anonyme).length;return <C key="anon" style={{padding:14,textAlign:"center",borderTop:"3px solid #6B7280"}}><div style={{fontSize:22,marginBottom:6}}>🕵️</div><div style={{fontSize:18,fontWeight:900,color:"#6B7280",fontFamily:"'Outfit',sans-serif"}}>{anon}</div><div style={{fontSize:11,color:"#71717A",marginTop:1}}>Anonymes</div><div style={{fontSize:10,color:"#A1A1AA"}}>{feedbacks.length>0?Math.round((anon/feedbacks.length)*100):0}% du total</div></C>;})()}
+    </div>
+
+    {/* Onglets filtre */}
+    <div style={{display:"flex",gap:8,marginBottom:14,flexWrap:"wrap"}}>
+      {tabs.map(([k,l,n])=><button key={k} onClick={()=>setFilter(k)} style={{padding:"6px 14px",borderRadius:99,border:`2px solid ${filter===k?"#16A34A":"#E4E4E7"}`,background:filter===k?"#16A34A":"#fff",color:filter===k?"#fff":"#71717A",fontWeight:700,fontSize:12,cursor:"pointer",fontFamily:"'Outfit',sans-serif",display:"flex",alignItems:"center",gap:6}}>{l}<span style={{background:filter===k?"rgba(255,255,255,.3)":"#F4F4F5",borderRadius:99,padding:"1px 7px",fontSize:11,fontWeight:800}}>{n}</span></button>)}
+    </div>
+
+    {/* Liste */}
+    {filtered.length===0&&<C style={{textAlign:"center",padding:32,color:"#A1A1AA",fontSize:13}}>Aucun feedback pour ce filtre.</C>}
+    <div style={{display:"flex",flexDirection:"column",gap:10}}>
+      {filtered.map(f=>{
+        const cc=f.confiance>=8?"#16A34A":f.confiance>=5?"#DA4F00":"#E11D48";
+        const uColor=getUserColor(f.auteur);
+        const avatar=getUserAvatar(f.auteur,f.anonyme);
+        return <C key={f.id} style={{borderLeft:`4px solid ${cc}`}}>
+          <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:10}}>
+            <div style={{display:"flex",alignItems:"center",gap:8}}>
+              <div style={{width:32,height:32,borderRadius:"50%",background:f.anonyme?"#E4E4E7":uColor,display:"flex",alignItems:"center",justifyContent:"center",fontSize:11,fontWeight:800,color:"#fff",fontFamily:"'Outfit',sans-serif"}}>{avatar}</div>
+              <div>
+                <div style={{fontSize:12,fontWeight:700,color:"#18181B",fontFamily:"'Outfit',sans-serif"}}>{f.auteur}</div>
+                <div style={{fontSize:10,color:"#A1A1AA"}}>📅 {f.date}</div>
+              </div>
+            </div>
+            <Pill color={cc}>Confiance : {f.confiance}/10</Pill>
+          </div>
+          <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:7,marginBottom:f.suggestions?8:0}}>
+            {[["👤 Clients",f.clientTypes,"#16A34A"],["🛡️ Objections",f.objections,"#E11D48"],["✅ Points forts",f.bien||[],"#16A34A"],["🚧 Blocages",f.bloque,"#DA4F00"]].map(([icon,items,c])=>(
+              <div key={icon} style={{background:c+"08",borderRadius:8,padding:"9px 10px"}}>
+                <div style={{fontSize:11,fontWeight:700,color:c,marginBottom:4,fontFamily:"'Outfit',sans-serif"}}>{icon}</div>
+                <div style={{display:"flex",flexWrap:"wrap",gap:3}}>{(items||[]).length===0?<span style={{fontSize:10,color:"#A1A1AA"}}>—</span>:(items||[]).map(i=><span key={i} style={{fontSize:10,padding:"1px 6px",borderRadius:99,background:c+"15",color:c,fontWeight:600}}>{i}</span>)}</div>
+              </div>
+            ))}
+          </div>
+          {f.suggestions&&<div style={{fontSize:11,color:"#3F3F46",background:"#F8FFF9",borderRadius:7,padding:"8px 10px",fontStyle:"italic",borderLeft:"2px solid #C0EAD3"}}>💡 "{f.suggestions}"</div>}
+        </C>;
+      })}
+    </div>
+  </div>;
+}
+
+
+function ManagerProgression({matchings}){
+  const salesUsers=USERS.filter(u=>u.role==="sales");
+  function getStats(name){const m=matchings.filter(x=>x.auteur===name);const followed=m.filter(x=>x.followed).length;const pct=m.length?Math.round((followed/m.length)*100):0;return {total:m.length,followed,pct};}
+  const teamData=salesUsers.map(u=>({...u,...getStats(u.name)}));
+  return <div><ST emoji="👥" sub="Suivi individuel basé sur les matchings Dual Path.">Progression de l'équipe</ST>
+    <div style={{display:"flex",flexDirection:"column",gap:10,marginBottom:14}}>
+      {teamData.map(u=>{const c=u.pct>=70?"#16A34A":u.pct>=40?"#DA4F00":"#E11D48";return <C key={u.id} style={{borderLeft:`4px solid ${c}`}}><div style={{display:"flex",alignItems:"center",gap:12}}><div style={{width:44,height:44,borderRadius:"50%",background:u.color,display:"flex",alignItems:"center",justifyContent:"center",fontSize:15,fontWeight:900,color:"#fff",fontFamily:"'Outfit',sans-serif",flexShrink:0}}>{u.avatar}</div><div style={{flex:1}}><div style={{fontSize:14,fontWeight:700,color:"#18181B",fontFamily:"'Outfit',sans-serif",marginBottom:6}}>{u.name}</div><div style={{height:6,background:"#E4E4E7",borderRadius:99,marginBottom:4}}><div style={{height:6,background:c,borderRadius:99,width:`${u.pct}%`,transition:"width .5s"}}/></div><div style={{display:"flex",justifyContent:"space-between",fontSize:11,color:"#71717A"}}><span>{u.followed}/{u.total} matchings suivis (Idéal)</span><span style={{color:c,fontWeight:700}}>{u.pct}% suivi Matrice</span></div></div></div></C>;})}
+    </div>
+    <C style={{background:"#F0FDF4",border:"1px solid #C0EAD3",padding:"14px 16px"}}>
+      <div style={{fontSize:13,fontWeight:700,color:"#15803D",marginBottom:8,fontFamily:"'Outfit',sans-serif"}}>💡 Actions recommandées</div>
+      {teamData.map(u=>{const a=u.pct>=70?"Continuer sur cette lancée ✨":u.pct>=40?"Revoir le Dual Path en 1:1 🎯":"Session coaching prioritaire 🚨";const c=u.pct>=70?"#16A34A":u.pct>=40?"#DA4F00":"#E11D48";return <div key={u.id} style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:8,paddingBottom:8,borderBottom:"1px solid #C0EAD3"}}><span style={{fontSize:13,color:"#3F3F46",fontWeight:600}}>{u.name}</span><span style={{fontSize:12,color:c,fontWeight:700}}>{a}</span></div>;})}
+    </C>
+  </div>;
+}
+
+// ═══════════════════════ FORMATEUR ═══════════════════════
+function FormateurScripts({scripts,setScripts}){
+  const [phase,setPhase]=useState("intro");const [ed,setEd]=useState(null);const [val,setVal]=useState("");const p=scripts[phase];
+  return <div>
+    <ST emoji="📞" sub="Modifie les scripts visibles par les Sales.">Éditeur Scripts</ST>
+    <div style={{display:"flex",gap:8,marginBottom:16,flexWrap:"wrap"}}>{Object.entries(scripts).map(([k,v])=><button key={k} onClick={()=>setPhase(k)} style={{padding:"7px 16px",borderRadius:99,border:`2px solid ${phase===k?v.color:"#E4E4E7"}`,background:phase===k?v.color:"#fff",color:phase===k?"#fff":"#71717A",fontWeight:700,fontSize:12,cursor:"pointer",fontFamily:"'Outfit',sans-serif"}}>{v.title}</button>)}</div>
+    <div style={{display:"flex",flexDirection:"column",gap:9}}>{p.steps.map((s,i)=><C key={i} style={{borderLeft:`4px solid ${p.color}`,padding:"13px 16px"}}>{ed===i?<div><input defaultValue={s.label} style={{fontSize:10,fontWeight:800,color:p.color,textTransform:"uppercase",border:"none",borderBottom:`1px solid ${p.color}`,outline:"none",background:"transparent",marginBottom:7,width:"100%",fontFamily:"'Outfit',sans-serif"}} onChange={e=>{const u={...scripts};u[phase].steps[i].label=e.target.value;setScripts(u);}}/><textarea value={val} onChange={e=>setVal(e.target.value)} rows={3} style={{width:"100%",fontSize:12,border:"1px solid #E4E4E7",borderRadius:9,padding:"9px 12px",fontFamily:"'Inter',sans-serif",resize:"vertical",boxSizing:"border-box"}}/><div style={{display:"flex",gap:7,marginTop:7}}><Btn onClick={()=>{const u={...scripts};u[phase].steps[i].text=val;setScripts(u);setEd(null);}} sm color="#16A34A">Sauvegarder</Btn><Btn onClick={()=>setEd(null)} outline sm color="#71717A">Annuler</Btn></div></div>:<div style={{display:"flex",gap:10,alignItems:"flex-start"}}><div style={{flex:1}}><Pill color={p.color}>{s.label}</Pill><div style={{fontSize:13,color:"#3F3F46",lineHeight:1.7,fontStyle:"italic",marginTop:6}}>"{s.text}"</div></div><div style={{display:"flex",gap:4}}><button onClick={()=>{setEd(i);setVal(s.text);}} style={{padding:"4px 8px",borderRadius:7,border:"1px solid #E4E4E7",background:"#fff",fontSize:11,cursor:"pointer"}}>✏️</button><button onClick={()=>{const u={...scripts};u[phase].steps.splice(i,1);setScripts(u);}} style={{padding:"4px 8px",borderRadius:7,border:"1px solid #FEE2E2",background:"#FFF1F2",fontSize:11,cursor:"pointer",color:"#E11D48"}}>🗑️</button></div></div>}</C>)}
+      <button onClick={()=>{const u={...scripts};u[phase].steps.push({label:"Nouvelle étape",text:"Texte du script..."});setScripts(u);}} style={{padding:"11px",borderRadius:10,border:"2px dashed #C0EAD3",background:"#F0FDF4",fontSize:12,color:"#16A34A",cursor:"pointer",fontWeight:700,fontFamily:"'Outfit',sans-serif"}}>+ Ajouter une étape</button>
+    </div>
+  </div>;
+}
+
+function FormateurStock({stock,setStock}){
+  return <div>
+    <ST emoji="📦" sub="Gère le stock de profs. Ces données alimentent la Lanterne V5 en temps réel.">Gestion du Stock</ST>
+    <C style={{marginBottom:12,background:"#F0FDF4",border:"1px solid #C0EAD3",padding:"12px 16px"}}><div style={{display:"flex",alignItems:"center",gap:7}}><Logo size={14}/><span style={{fontSize:12,fontWeight:600,color:"#15803D",fontFamily:"'Outfit',sans-serif"}}>🔦 Ce stock alimente directement la Lanterne V5 — modifications instantanément visibles.</span></div></C>
+    <div style={{display:"flex",flexDirection:"column",gap:9}}>{stock.map((s,i)=><C key={s.typ} style={{borderLeft:`4px solid ${s.dispo?"#16A34A":"#E11D48"}`,padding:"14px 18px"}}><div style={{display:"flex",justifyContent:"space-between",alignItems:"center"}}><div><div style={{fontSize:13,fontWeight:700,color:"#18181B",fontFamily:"'Outfit',sans-serif"}}>{s.typ}</div><div style={{fontSize:11,color:"#71717A",marginTop:2}}>{s.note}</div></div><div style={{display:"flex",alignItems:"center",gap:12}}><div style={{textAlign:"right"}}><div style={{fontSize:10,color:"#71717A",marginBottom:3}}>Quantité</div><input type="number" value={s.nb} min={0} onChange={e=>{const u=[...stock];u[i]={...u[i],nb:Number(e.target.value)};setStock(u);}} onBlur={()=>setStock([...stock])} style={{width:60,fontSize:13,fontWeight:700,border:"1px solid #E4E4E7",borderRadius:8,padding:"5px 8px",textAlign:"center",fontFamily:"'Outfit',sans-serif"}}/></div><div style={{textAlign:"center"}}><div style={{fontSize:10,color:"#71717A",marginBottom:3}}>Dispo</div><Tog value={s.dispo} onChange={v=>{const u=[...stock];u[i]={...u[i],dispo:v};setStock(u);}} color="#16A34A"/></div><Pill color={s.dispo?"#16A34A":"#E11D48"}>{s.dispo?`✓ ${s.nb}`:"✗ Indispo"}</Pill></div></div></C>)}</div>
+  </div>;
+}
+
+function FormateurSuggestions({suggestions,setSuggestions,updateStatut,deleteSugg}){
+  const pending=suggestions.filter(s=>s.statut==="pending");const approved=suggestions.filter(s=>s.statut==="approved");
+  async function approve(id){if(updateStatut)await updateStatut(id,"approved");else setSuggestions(p=>p.map(s=>s.id===id?{...s,statut:"approved"}:s));}
+  async function reject(id){if(deleteSugg)await deleteSugg(id);else setSuggestions(p=>p.filter(s=>s.id!==id));}
+  return <div>
+    <ST emoji="💡" sub="Valide les suggestions remontées par les Sales.">Suggestions équipe</ST>
+    <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:10,marginBottom:16}}><Stat icon="⏳" label="En attente" value={pending.length} color="#DA4F00"/><Stat icon="✅" label="Approuvées" value={approved.length} color="#16A34A"/></div>
+    {pending.map(s=><C key={s.id} style={{marginBottom:9,borderLeft:"4px solid #DA4F00"}}><div style={{display:"flex",justifyContent:"space-between",marginBottom:8}}><Pill color="#DA4F00">{s.type}</Pill><span style={{fontSize:10,color:"#A1A1AA"}}>{s.auteur} · {s.date}</span></div><div style={{fontSize:12,color:"#3F3F46",background:"#FFF7F0",borderRadius:9,padding:"10px 12px",marginBottom:9,lineHeight:1.6,fontStyle:"italic"}}>"{s.contenu}"</div><div style={{display:"flex",gap:7}}><Btn onClick={()=>approve(s.id)} sm color="#16A34A">✓ Approuver</Btn><Btn onClick={()=>reject(s.id)} outline sm color="#E11D48">✗ Rejeter</Btn></div></C>)}
+    {approved.map(s=><C key={s.id} style={{marginBottom:7,padding:"11px 14px",borderLeft:"4px solid #16A34A",background:"#F0FDF4"}}><div style={{display:"flex",justifyContent:"space-between",alignItems:"center"}}><div><div style={{fontSize:11,fontWeight:700,color:"#15803D",fontFamily:"'Outfit',sans-serif"}}>{s.auteur} · {s.date}</div><div style={{fontSize:12,color:"#3F3F46",marginTop:3,fontStyle:"italic"}}>"{s.contenu}"</div></div><Pill color="#16A34A">Intégré ✓</Pill></div></C>)}
+  </div>;
+}
+
+function FormateurUsers(){
+  const rc={sales:"#16A34A",manager:"#0B68B4",formateur:"#DA4F00"};
+  const roleLabel={sales:"Sales 📞",manager:"Manager 👔",formateur:"Formateur 🎓"};
+  return <div><ST emoji="👤" sub="Comptes actifs et rôles — mot de passe commun géré par le Formateur.">Utilisateurs</ST>
+    <C style={{marginBottom:14,background:"#F0FDF4",border:"1px solid #C0EAD3",padding:"13px 16px"}}><div style={{fontSize:13,color:"#15803D",fontWeight:600,fontFamily:"'Outfit',sans-serif"}}>🔒 Mot de passe actuel : <span style={{letterSpacing:"0.1em",background:"#D1FAE5",padding:"2px 10px",borderRadius:6,fontFamily:"monospace",fontSize:14}}>Sherpas2026</span> — Pour le changer, modifie le fichier HTML (variable PASSWORD).</div></C>
+    <C style={{padding:0,overflow:"hidden"}}><table style={{width:"100%",borderCollapse:"collapse"}}>
+      <thead><tr style={{background:"#F8FFF9",borderBottom:"2px solid #C0EAD3"}}>{["Compte","Email","Rôle","Accès"].map(h=><th key={h} style={{padding:"11px 14px",textAlign:"left",fontSize:11,fontWeight:700,color:"#71717A",textTransform:"uppercase",fontFamily:"'Outfit',sans-serif"}}>{h}</th>)}</tr></thead>
+      <tbody>{USERS.map((u,i)=><tr key={u.id} style={{borderBottom:"1px solid #F4F4F5",background:i%2===0?"#F8FFF9":"#fff"}}>
+        <td style={{padding:"12px 14px",fontSize:13,fontWeight:700,color:"#18181B",fontFamily:"'Outfit',sans-serif"}}>
+          <div style={{display:"flex",alignItems:"center",gap:9}}>
+            <div style={{width:32,height:32,borderRadius:"50%",background:u.color,display:"flex",alignItems:"center",justifyContent:"center",fontSize:11,fontWeight:900,color:"#fff",fontFamily:"'Outfit',sans-serif"}}>{u.avatar}</div>
+            {u.name}
+          </div>
+        </td>
+        <td style={{padding:"12px 14px",fontSize:12,color:"#71717A"}}>{u.email}</td>
+        <td style={{padding:"12px 14px"}}><Pill color={rc[u.role]}>{roleLabel[u.role]}</Pill></td>
+        <td style={{padding:"12px 14px"}}><Pill color="#16A34A">Actif ✓</Pill></td>
+      </tr>)}</tbody>
+    </table></C>
+  </div>;
+}
+
+// ═══════════════════════ FORMATEUR FORMATIONS ═══════════════════════
+function FormateurFormations({formations,setFormations}){
+  const F=formations&&Object.keys(formations).length>0?formations:FORMATION_DEFAULT;
+  const [pilier,setPilier]=useState(Object.keys(F)[0]||"sales");
+  const [editMod,setEditMod]=useState(null); // {pilierKey, idx} or null
+  const [editPilier,setEditPilier]=useState(null); // pilierKey or null
+  const [showNewMod,setShowNewMod]=useState(false);
+  const [showNewPilier,setShowNewPilier]=useState(false);
+
+  // Module edit state
+  const [mTitle,setMTitle]=useState("");const [mDur,setMDur]=useState("");const [mDesc,setMDesc]=useState("");
+  // Pilier edit state
+  const [pTitle,setPTitle]=useState("");const [pIcon,setPIcon]=useState("");const [pColor,setPColor]=useState("#16A34A");
+  // New pilier state
+  const [npTitle,setNpTitle]=useState("");const [npIcon,setNpIcon]=useState("📚");const [npColor,setNpColor]=useState("#7C3AED");
+
+  const COLORS=["#16A34A","#0B68B4","#DA4F00","#7C3AED","#E11D48","#0891B2"];
+
+  function save(next){setFormations({...next});}
+
+  function startEditMod(pk,idx){
+    const m=F[pk].modules[idx];
+    setMTitle(m.title);setMDur(m.duration);setMDesc(m.description||"");
+    setEditMod({pk,idx});setShowNewMod(false);
+  }
+  function saveMod(){
+    if(!mTitle.trim()) return;
+    const next={...F};
+    next[editMod.pk]={...next[editMod.pk],modules:[...next[editMod.pk].modules]};
+    next[editMod.pk].modules[editMod.idx]={...next[editMod.pk].modules[editMod.idx],title:mTitle,duration:mDur,description:mDesc};
+    save(next);setEditMod(null);
+  }
+  function deleteMod(pk,idx){
+    const next={...F};
+    next[pk]={...next[pk],modules:next[pk].modules.filter((_,i)=>i!==idx)};
+    save(next);
+  }
+  function addMod(){
+    if(!mTitle.trim()) return;
+    const next={...F};
+    const newMod={id:Date.now(),title:mTitle,duration:mDur||"30 min",done:false,description:mDesc};
+    next[pilier]={...next[pilier],modules:[...next[pilier].modules,newMod]};
+    save(next);setShowNewMod(false);setMTitle("");setMDur("");setMDesc("");
+  }
+
+  function startEditPilier(pk){
+    setPTitle(F[pk].title);setPIcon(F[pk].icon);setPColor(F[pk].color);
+    setEditPilier(pk);
+  }
+  function savePilier(){
+    if(!pTitle.trim()) return;
+    const next={...F};
+    next[editPilier]={...next[editPilier],title:pTitle,icon:pIcon,color:pColor};
+    save(next);setEditPilier(null);
+  }
+  function deletePilier(pk){
+    if(Object.keys(F).length<=1){alert("Il faut au moins un pilier.");return;}
+    const next={...F};delete next[pk];
+    const firstKey=Object.keys(next)[0];
+    save(next);setPilier(firstKey);
+  }
+  function addPilier(){
+    if(!npTitle.trim()) return;
+    const key="pilier_"+Date.now();
+    const next={...F,[key]:{title:npTitle,icon:npIcon,color:npColor,modules:[]}};
+    save(next);setPilier(key);setShowNewPilier(false);setNpTitle("");setNpIcon("📚");setNpColor("#7C3AED");
+  }
+
+  const pill=F[pilier]||Object.values(F)[0];
+
+  return <div>
+    <ST emoji="🎓" sub="Gérez les piliers de formation et leurs modules. Les Sales voient les changements immédiatement.">Éditeur Formations</ST>
+
+    {/* Piliers */}
+    <C style={{marginBottom:14}}>
+      <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:12}}>
+        <div style={{fontSize:13,fontWeight:700,color:"#18181B",fontFamily:"'Outfit',sans-serif"}}>📚 Piliers de formation</div>
+        <Btn sm color="#DA4F00" onClick={()=>setShowNewPilier(!showNewPilier)}>+ Nouveau pilier</Btn>
+      </div>
+      <div style={{display:"flex",gap:8,flexWrap:"wrap"}}>
+        {Object.entries(F).map(([k,v])=>(
+          <div key={k} style={{display:"flex",alignItems:"center",gap:4}}>
+            <button onClick={()=>setPilier(k)} style={{padding:"7px 14px",borderRadius:99,border:`2px solid ${pilier===k?v.color:"#E4E4E7"}`,background:pilier===k?v.color:"#fff",color:pilier===k?"#fff":"#71717A",fontWeight:700,fontSize:12,cursor:"pointer",fontFamily:"'Outfit',sans-serif"}}>{v.icon} {v.title}</button>
+            <button onClick={()=>startEditPilier(k)} style={{padding:"5px 8px",borderRadius:8,border:"1px solid #E4E4E7",background:"#fff",cursor:"pointer",fontSize:12,color:"#71717A"}}>✏️</button>
+          </div>
+        ))}
+      </div>
+
+      {/* Nouveau pilier */}
+      {showNewPilier&&<div style={{marginTop:14,padding:14,background:"#F8FFF9",borderRadius:10,border:"1px solid #C0EAD3"}}>
+        <div style={{fontSize:12,fontWeight:700,color:"#15803D",marginBottom:10,fontFamily:"'Outfit',sans-serif"}}>Nouveau pilier</div>
+        <div style={{display:"grid",gridTemplateColumns:"1fr 80px",gap:8,marginBottom:8}}>
+          <input value={npTitle} onChange={e=>setNpTitle(e.target.value)} placeholder="Nom du pilier" style={{fontSize:13,border:"1px solid #E4E4E7",borderRadius:8,padding:"8px 11px",fontFamily:"'Inter',sans-serif"}}/>
+          <input value={npIcon} onChange={e=>setNpIcon(e.target.value)} placeholder="🎯" style={{fontSize:18,border:"1px solid #E4E4E7",borderRadius:8,padding:"8px",textAlign:"center"}}/>
+        </div>
+        <div style={{display:"flex",gap:6,marginBottom:10}}>
+          {COLORS.map(c=><button key={c} onClick={()=>setNpColor(c)} style={{width:24,height:24,borderRadius:"50%",background:c,border:npColor===c?"3px solid #18181B":"2px solid transparent",cursor:"pointer"}}/>)}
+        </div>
+        <div style={{display:"flex",gap:7}}>
+          <Btn sm color="#16A34A" onClick={addPilier}>Créer</Btn>
+          <Btn sm outline color="#71717A" onClick={()=>setShowNewPilier(false)}>Annuler</Btn>
+        </div>
+      </div>}
+
+      {/* Éditer pilier */}
+      {editPilier&&<div style={{marginTop:14,padding:14,background:"#FFF7F0",borderRadius:10,border:"1px solid #FED7AA"}}>
+        <div style={{fontSize:12,fontWeight:700,color:"#C2410C",marginBottom:10,fontFamily:"'Outfit',sans-serif"}}>Modifier le pilier</div>
+        <div style={{display:"grid",gridTemplateColumns:"1fr 60px",gap:8,marginBottom:8}}>
+          <input value={pTitle} onChange={e=>setPTitle(e.target.value)} style={{fontSize:13,border:"1px solid #E4E4E7",borderRadius:8,padding:"8px 11px",fontFamily:"'Inter',sans-serif"}}/>
+          <input value={pIcon} onChange={e=>setPIcon(e.target.value)} style={{fontSize:18,border:"1px solid #E4E4E7",borderRadius:8,padding:"8px",textAlign:"center"}}/>
+        </div>
+        <div style={{display:"flex",gap:6,marginBottom:10}}>
+          {COLORS.map(c=><button key={c} onClick={()=>setPColor(c)} style={{width:24,height:24,borderRadius:"50%",background:c,border:pColor===c?"3px solid #18181B":"2px solid transparent",cursor:"pointer"}}/>)}
+        </div>
+        <div style={{display:"flex",gap:7}}>
+          <Btn sm color="#DA4F00" onClick={savePilier}>Sauvegarder</Btn>
+          <Btn sm outline color="#E11D48" onClick={()=>deletePilier(editPilier)}>🗑️ Supprimer</Btn>
+          <Btn sm outline color="#71717A" onClick={()=>setEditPilier(null)}>Annuler</Btn>
+        </div>
+      </div>}
+    </C>
+
+    {/* Modules du pilier sélectionné */}
+    {pill&&<C>
+      <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:14}}>
+        <div style={{fontSize:13,fontWeight:700,color:"#18181B",fontFamily:"'Outfit',sans-serif"}}>{pill.icon} Modules — {pill.title}</div>
+        <Btn sm color={pill.color} onClick={()=>{setShowNewMod(true);setEditMod(null);setMTitle("");setMDur("");setMDesc("");}}>+ Ajouter un module</Btn>
+      </div>
+
+      {/* Nouveau module */}
+      {showNewMod&&<div style={{marginBottom:14,padding:14,background:pill.color+"08",borderRadius:10,border:`1px solid ${pill.color}35`}}>
+        <div style={{fontSize:12,fontWeight:700,color:pill.color,marginBottom:10,fontFamily:"'Outfit',sans-serif"}}>Nouveau module</div>
+        <div style={{marginBottom:8}}><div style={{fontSize:11,color:"#71717A",marginBottom:4}}>Titre *</div><input value={mTitle} onChange={e=>setMTitle(e.target.value)} placeholder="Titre du module" style={{width:"100%",fontSize:13,border:"1px solid #E4E4E7",borderRadius:8,padding:"8px 11px",boxSizing:"border-box",fontFamily:"'Inter',sans-serif"}}/></div>
+        <div style={{marginBottom:8}}><div style={{fontSize:11,color:"#71717A",marginBottom:4}}>Durée</div><input value={mDur} onChange={e=>setMDur(e.target.value)} placeholder="30 min" style={{width:"100%",fontSize:13,border:"1px solid #E4E4E7",borderRadius:8,padding:"8px 11px",boxSizing:"border-box",fontFamily:"'Inter',sans-serif"}}/></div>
+        <div style={{marginBottom:10}}><div style={{fontSize:11,color:"#71717A",marginBottom:4}}>Description</div><textarea value={mDesc} onChange={e=>setMDesc(e.target.value)} placeholder="Ce que les Sales vont apprendre…" rows={2} style={{width:"100%",fontSize:12,border:"1px solid #E4E4E7",borderRadius:8,padding:"8px 11px",fontFamily:"'Inter',sans-serif",resize:"vertical",boxSizing:"border-box"}}/></div>
+        <div style={{display:"flex",gap:7}}><Btn sm color={pill.color} onClick={addMod} disabled={!mTitle.trim()}>Ajouter</Btn><Btn sm outline color="#71717A" onClick={()=>setShowNewMod(false)}>Annuler</Btn></div>
+      </div>}
+
+      {/* Liste des modules */}
+      <div style={{display:"flex",flexDirection:"column",gap:9}}>
+        {pill.modules.length===0&&<div style={{textAlign:"center",padding:24,color:"#A1A1AA",fontSize:13}}>Aucun module — clique sur "Ajouter un module".</div>}
+        {pill.modules.map((m,i)=>(
+          <div key={m.id||i}>
+            {editMod?.pk===pilier&&editMod?.idx===i?(
+              <div style={{padding:14,borderRadius:10,border:`2px solid ${pill.color}`,background:pill.color+"06"}}>
+                <div style={{marginBottom:8}}><div style={{fontSize:11,color:"#71717A",marginBottom:4}}>Titre *</div><input value={mTitle} onChange={e=>setMTitle(e.target.value)} style={{width:"100%",fontSize:13,border:"1px solid #E4E4E7",borderRadius:8,padding:"8px 11px",boxSizing:"border-box",fontFamily:"'Inter',sans-serif"}}/></div>
+                <div style={{marginBottom:8}}><div style={{fontSize:11,color:"#71717A",marginBottom:4}}>Durée</div><input value={mDur} onChange={e=>setMDur(e.target.value)} style={{width:"100%",fontSize:13,border:"1px solid #E4E4E7",borderRadius:8,padding:"8px 11px",boxSizing:"border-box",fontFamily:"'Inter',sans-serif"}}/></div>
+                <div style={{marginBottom:10}}><div style={{fontSize:11,color:"#71717A",marginBottom:4}}>Description</div><textarea value={mDesc} onChange={e=>setMDesc(e.target.value)} rows={2} style={{width:"100%",fontSize:12,border:"1px solid #E4E4E7",borderRadius:8,padding:"8px 11px",fontFamily:"'Inter',sans-serif",resize:"vertical",boxSizing:"border-box"}}/></div>
+                <div style={{display:"flex",gap:7}}><Btn sm color={pill.color} onClick={saveMod}>Sauvegarder</Btn><Btn sm outline color="#71717A" onClick={()=>setEditMod(null)}>Annuler</Btn></div>
+              </div>
+            ):(
+              <C style={{display:"flex",alignItems:"center",gap:12,padding:"12px 16px",borderLeft:`4px solid ${pill.color}`}}>
+                <div style={{width:32,height:32,borderRadius:9,background:pill.color+"15",display:"flex",alignItems:"center",justifyContent:"center",fontSize:13,flexShrink:0}}>{i+1}</div>
+                <div style={{flex:1}}>
+                  <div style={{fontSize:13,fontWeight:700,color:"#18181B",fontFamily:"'Outfit',sans-serif"}}>{m.title}</div>
+                  <div style={{fontSize:11,color:"#A1A1AA",marginTop:1}}>⏱ {m.duration}{m.description&&` · ${m.description}`}</div>
+                </div>
+                <div style={{display:"flex",gap:5}}>
+                  <button onClick={()=>startEditMod(pilier,i)} style={{padding:"5px 9px",borderRadius:7,border:"1px solid #E4E4E7",background:"#fff",cursor:"pointer",fontSize:12}}>✏️</button>
+                  <button onClick={()=>deleteMod(pilier,i)} style={{padding:"5px 9px",borderRadius:7,border:"1px solid #FEE2E2",background:"#FFF1F2",cursor:"pointer",fontSize:12,color:"#E11D48"}}>🗑️</button>
+                </div>
+              </C>
+            )}
+          </div>
+        ))}
+      </div>
+    </C>}
+  </div>;
+}
+
+// ═══════════════════════ MANAGER USERS ═══════════════════════
+function ManagerUsers({extraUsers,setExtraUsers}){
+  const [showForm,setShowForm]=useState(false);
+  const [name,setName]=useState("");
+  const [email,setEmail]=useState("");
+  const [role,setRole]=useState("sales");
+  const [done,setDone]=useState(false);
+  const AVATAR_COLORS=["#16A34A","#0B68B4","#DA4F00","#7C3AED","#E11D48","#0891B2","#D97706"];
+  const allUsers=[...USERS,...(extraUsers||[])];
+
+  function getInitials(n){return n.trim().split(" ").map(w=>w[0]||"").join("").slice(0,2).toUpperCase();}
+  function randColor(){return AVATAR_COLORS[Math.floor(Math.random()*AVATAR_COLORS.length)];}
+
+  function addUser(){
+    if(!name.trim()||!email.trim()) return;
+    const newUser={
+      id:"user_"+Date.now(),
+      name:name.trim(),
+      prenom:name.trim().split(" ")[0],
+      role,
+      avatar:getInitials(name),
+      color:randColor(),
+      email:email.trim(),
+      createdAt:today(),
+    };
+    setExtraUsers(p=>[...(p||[]),newUser]);
+    setName("");setEmail("");setRole("sales");setShowForm(false);setDone(true);
+    setTimeout(()=>setDone(false),3000);
+  }
+  function deleteUser(id){
+    setExtraUsers(p=>(p||[]).filter(u=>u.id!==id));
+  }
+
+  const rc={sales:"#16A34A",manager:"#0B68B4",formateur:"#DA4F00"};
+  const rl={sales:"Sales 📞",manager:"Manager 👔",formateur:"Formateur 🎓"};
+
+  return <div>
+    <ST emoji="👥" sub="Créez et gérez les comptes de l'équipe. Le mot de passe est commun à tous les comptes.">Gestion des utilisateurs</ST>
+
+    {done&&<div style={{marginBottom:12,padding:"11px 16px",borderRadius:10,background:"#D1FAE5",border:"1px solid #86EFAC",fontSize:13,fontWeight:600,color:"#15803D"}}>✅ Utilisateur créé ! Il peut se connecter dès maintenant avec le mot de passe commun.</div>}
+
+    {/* Mot de passe commun */}
+    <C style={{marginBottom:14,background:"#F0FDF4",border:"1px solid #C0EAD3"}}>
+      <div style={{display:"flex",alignItems:"center",gap:10}}>
+        <span style={{fontSize:20}}>🔒</span>
+        <div>
+          <div style={{fontSize:13,fontWeight:700,color:"#15803D",fontFamily:"'Outfit',sans-serif"}}>Mot de passe commun : <span style={{fontFamily:"monospace",background:"#D1FAE5",padding:"2px 10px",borderRadius:6,fontSize:14,letterSpacing:".1em"}}>Sherpas2026</span></div>
+          <div style={{fontSize:11,color:"#71717A",marginTop:2}}>Tous les comptes utilisent le même mot de passe. Pour le changer, modifie la variable PASSWORD dans le HTML.</div>
+        </div>
+      </div>
+    </C>
+
+    {/* Stats rapides */}
+    <div style={{display:"grid",gridTemplateColumns:"repeat(3,1fr)",gap:10,marginBottom:14}}>
+      {[["📞","Sales",allUsers.filter(u=>u.role==="sales").length,"#16A34A"],["👔","Managers",allUsers.filter(u=>u.role==="manager").length,"#0B68B4"],["🎓","Formateurs",allUsers.filter(u=>u.role==="formateur").length,"#DA4F00"]].map(([ic,l,v,c])=>(
+        <C key={l} style={{padding:14,textAlign:"center",borderTop:`3px solid ${c}`}}>
+          <div style={{fontSize:22,marginBottom:4}}>{ic}</div>
+          <div style={{fontSize:22,fontWeight:900,color:c,fontFamily:"'Outfit',sans-serif"}}>{v}</div>
+          <div style={{fontSize:11,color:"#71717A"}}>{l}</div>
+        </C>
+      ))}
+    </div>
+
+    {/* Bouton créer */}
+    <div style={{display:"flex",justifyContent:"flex-end",marginBottom:14}}>
+      <Btn color="#1E40AF" onClick={()=>setShowForm(!showForm)}>+ Créer un utilisateur</Btn>
+    </div>
+
+    {/* Formulaire création */}
+    {showForm&&<C style={{marginBottom:14,border:"2px solid #1E40AF",background:"#EFF6FF"}}>
+      <div style={{fontSize:14,fontWeight:700,color:"#1E40AF",marginBottom:14,fontFamily:"'Outfit',sans-serif"}}>➕ Nouveau compte</div>
+      <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:10,marginBottom:10}}>
+        <div><div style={{fontSize:11,fontWeight:600,color:"#71717A",marginBottom:5}}>Prénom & Nom *</div><input value={name} onChange={e=>setName(e.target.value)} placeholder="Marie Dupont" style={{width:"100%",fontSize:13,border:"1px solid #E4E4E7",borderRadius:8,padding:"9px 12px",boxSizing:"border-box",fontFamily:"'Inter',sans-serif"}}/></div>
+        <div><div style={{fontSize:11,fontWeight:600,color:"#71717A",marginBottom:5}}>Email *</div><input value={email} onChange={e=>setEmail(e.target.value)} placeholder="marie@sherpas.com" type="email" style={{width:"100%",fontSize:13,border:"1px solid #E4E4E7",borderRadius:8,padding:"9px 12px",boxSizing:"border-box",fontFamily:"'Inter',sans-serif"}}/></div>
+      </div>
+      <div style={{marginBottom:14}}>
+        <div style={{fontSize:11,fontWeight:600,color:"#71717A",marginBottom:8}}>Rôle *</div>
+        <div style={{display:"flex",gap:9}}>
+          {[["sales","Sales 📞","#16A34A"],["manager","Manager 👔","#0B68B4"],["formateur","Formateur 🎓","#DA4F00"]].map(([r,l,c])=>(
+            <button key={r} onClick={()=>setRole(r)} style={{flex:1,padding:"10px",borderRadius:10,border:`2px solid ${role===r?c:"#E4E4E7"}`,background:role===r?c+"10":"#fff",color:role===r?c:"#71717A",fontWeight:700,fontSize:12,cursor:"pointer",fontFamily:"'Outfit',sans-serif"}}>{l}</button>
+          ))}
+        </div>
+      </div>
+      {!name.trim()||!email.trim()?<div style={{fontSize:11,color:"#E11D48",marginBottom:8}}>* Prénom/Nom et Email requis</div>:null}
+      <div style={{display:"flex",gap:8}}>
+        <Btn color="#1E40AF" onClick={addUser} disabled={!name.trim()||!email.trim()}>Créer le compte →</Btn>
+        <Btn outline color="#71717A" onClick={()=>setShowForm(false)}>Annuler</Btn>
+      </div>
+    </C>}
+
+    {/* Tableau des utilisateurs */}
+    <C style={{padding:0,overflow:"hidden"}}>
+      <table style={{width:"100%",borderCollapse:"collapse"}}>
+        <thead><tr style={{background:"#EFF6FF",borderBottom:"2px solid #BFDBFE"}}>{["Compte","Email","Rôle","Statut","Action"].map(h=><th key={h} style={{padding:"11px 14px",textAlign:"left",fontSize:11,fontWeight:700,color:"#71717A",textTransform:"uppercase",fontFamily:"'Outfit',sans-serif"}}>{h}</th>)}</tr></thead>
+        <tbody>
+          {allUsers.map((u,i)=>{
+            const isBuiltIn=USERS.some(x=>x.id===u.id);
+            return <tr key={u.id} style={{borderBottom:"1px solid #F4F4F5",background:i%2===0?"#F8FAFF":"#fff"}}>
+              <td style={{padding:"12px 14px"}}>
+                <div style={{display:"flex",alignItems:"center",gap:9}}>
+                  <div style={{width:32,height:32,borderRadius:"50%",background:u.color,display:"flex",alignItems:"center",justifyContent:"center",fontSize:11,fontWeight:900,color:"#fff",fontFamily:"'Outfit',sans-serif",flexShrink:0}}>{u.avatar}</div>
+                  <div>
+                    <div style={{fontSize:13,fontWeight:700,color:"#18181B",fontFamily:"'Outfit',sans-serif"}}>{u.name}</div>
+                    {!isBuiltIn&&<div style={{fontSize:10,color:"#A1A1AA"}}>Créé le {u.createdAt||""}</div>}
+                  </div>
+                </div>
+              </td>
+              <td style={{padding:"12px 14px",fontSize:12,color:"#71717A"}}>{u.email}</td>
+              <td style={{padding:"12px 14px"}}><Pill color={rc[u.role]}>{rl[u.role]}</Pill></td>
+              <td style={{padding:"12px 14px"}}>{isBuiltIn?<Pill color="#16A34A">Compte fixe</Pill>:<Pill color="#0B68B4">Actif ✓</Pill>}</td>
+              <td style={{padding:"12px 14px"}}>
+                {!isBuiltIn
+                  ?<button onClick={()=>deleteUser(u.id)} style={{padding:"5px 10px",borderRadius:7,border:"1px solid #FEE2E2",background:"#FFF1F2",color:"#E11D48",fontSize:11,cursor:"pointer",fontWeight:600,fontFamily:"'Outfit',sans-serif"}}>Supprimer</button>
+                  :<span style={{fontSize:11,color:"#A1A1AA"}}>—</span>
+                }
+              </td>
+            </tr>;
+          })}
+        </tbody>
+      </table>
+    </C>
+  </div>;
+}
+
+// ═══════════════════════ SIDEBAR WITH USER ═══════════════════════
+function SidebarWithUser({role,page,setPage,onLogout,user,dbReady,loading}){
+  const th=B[role];
+  const menus={
+    sales:[["dash","📊","Tableau de bord"],["lanterne","🔦","Lanterne V5 ✦"],["scripts","📞","Scripts d'appel"],["objections","🛡️","Fiches objections"],["formation","🎓","Formation"],["feedback","💬","Mon feedback"],["demandes","📍","Demandes sans match"],["rentree","🏫","Réservoir Rentrée"]],
+    manager:[["m-vue","🧭","Vue d'ensemble"],["m-matching","⚖️","Idéal vs Manuel"],["m-besoins","🎯","Besoins formation"],["m-rentree","📈","Réservoir Rentrée"],["m-feedback","💬","Feedbacks équipe"],["m-progression","👥","Progression"]],
+    formateur:[["f-scripts","📞","Éditeur Scripts"],["f-stock","📦","Gestion du Stock"],["f-suggestions","💡","Suggestions équipe"],["f-users","👤","Utilisateurs"]],
+  };
+  return <div style={{width:226,background:th.sidebar,display:"flex",flexDirection:"column",flexShrink:0,height:"100vh",position:"sticky",top:0}}>
+    {/* Header */}
+    <div style={{padding:"20px 16px 16px",borderBottom:"1px solid rgba(255,255,255,.08)"}}>
+      <div style={{display:"flex",alignItems:"center",gap:9,marginBottom:9}}><Logo size={20} white={true}/><span style={{fontSize:13,fontWeight:900,color:"#fff",fontFamily:"'Outfit',sans-serif",letterSpacing:"-.02em"}}>LES SHERPAS</span></div>
+      <div style={{display:"flex",alignItems:"center",gap:6}}><span style={{fontSize:10,background:th.accent+"28",color:th.accent,borderRadius:99,padding:"3px 10px",fontWeight:800,fontFamily:"'Outfit',sans-serif",textTransform:"uppercase",letterSpacing:".08em"}}>{th.emoji} {th.label}</span><span style={{fontSize:10,background:"rgba(255,255,255,.1)",color:"rgba(255,255,255,.5)",borderRadius:99,padding:"3px 8px",fontFamily:"'Outfit',sans-serif"}}>V5</span></div>
+    </div>
+    {/* Nav */}
+    <nav style={{flex:1,padding:"8px 6px",overflowY:"auto"}}>
+      {(menus[role]||[]).map(([id,icon,label])=><button key={id} onClick={()=>setPage(id)} style={{width:"100%",padding:"9px 10px",borderRadius:9,border:"none",background:page===id?th.accent+"22":"transparent",color:page===id?th.accent:"rgba(255,255,255,.42)",textAlign:"left",cursor:"pointer",display:"flex",alignItems:"center",gap:8,fontSize:12,fontWeight:page===id?700:400,fontFamily:"'Inter',sans-serif",marginBottom:2,borderLeft:`3px solid ${page===id?th.accent:"transparent"}`}}><span style={{fontSize:14}}>{icon}</span>{label}</button>)}
+    </nav>
+    {/* User footer */}
+    <div style={{padding:"12px 14px",borderTop:"1px solid rgba(255,255,255,.08)"}}>
+      <div style={{display:"flex",alignItems:"center",gap:6,marginBottom:8,padding:"5px 8px",borderRadius:7,background:"rgba(255,255,255,.06)"}}>
+        <div style={{width:7,height:7,borderRadius:"50%",background:loading?"#FCD34D":dbReady?"#4ADE80":"#F87171",boxShadow:`0 0 6px ${loading?"#FCD34D":dbReady?"#4ADE80":"#F87171"}`,flexShrink:0}}/>
+        <span style={{fontSize:10,color:"rgba(255,255,255,.5)",fontFamily:"'Outfit',sans-serif"}}>{loading?"Synchro…":dbReady?"Supabase 🟢":"Local 🔴"}</span>
+      </div>
+      <div style={{display:"flex",alignItems:"center",gap:10,marginBottom:10}}>
+        <div style={{width:32,height:32,borderRadius:"50%",background:user.color,display:"flex",alignItems:"center",justifyContent:"center",fontSize:11,fontWeight:900,color:"#fff",fontFamily:"'Outfit',sans-serif",flexShrink:0}}>{user.avatar}</div>
+        <div style={{flex:1,minWidth:0}}>
+          <div style={{fontSize:13,fontWeight:700,color:"#fff",fontFamily:"'Outfit',sans-serif",whiteSpace:"nowrap",overflow:"hidden",textOverflow:"ellipsis"}}>{user.name}</div>
+          <div style={{fontSize:10,color:"rgba(255,255,255,.45)"}}>{user.email}</div>
+        </div>
+      </div>
+      <button onClick={onLogout} style={{width:"100%",padding:"7px",borderRadius:8,background:"rgba(255,255,255,.08)",border:"1px solid rgba(255,255,255,.12)",color:"rgba(255,255,255,.5)",fontSize:11,cursor:"pointer",fontFamily:"'Outfit',sans-serif",fontWeight:600,textAlign:"center"}}>🚪 Se déconnecter</button>
+    </div>
+  </div>;
+}
+
+// ═══════════════════════ LOGIN SCREEN ═══════════════════════
+function LoginScreen({onLogin}){
+  const [selectedUser,setSelectedUser]=useState(null);
+  const [pwd,setPwd]=useState("");
+  const [error,setError]=useState("");
+  const [showPwd,setShowPwd]=useState(false);
+  const [loading,setLoading]=useState(false);
+
+  function handleLogin(){
+    if(!selectedUser){setError("Sélectionne ton compte.");return;}
+    if(pwd!==PASSWORD){setError("Mot de passe incorrect. Réessaie.");setPwd("");return;}
+    setError("");setLoading(true);
+    setTimeout(()=>onLogin(selectedUser),700);
+  }
+
+  return <div style={{minHeight:"100vh",background:"linear-gradient(150deg,#0D1F12 0%,#16A34A 60%,#62E58E 100%)",display:"flex",flexDirection:"column",alignItems:"center",justifyContent:"center",padding:32,position:"relative",overflow:"hidden"}}>
+    {/* Déco */}
+    <svg style={{position:"absolute",top:0,left:0,opacity:.08,pointerEvents:"none"}} width="400" height="280" viewBox="0 0 400 280"><path d="-20,80 Q80,20 180,100 Q280,180 380,60" stroke="white" strokeWidth="60" fill="none" strokeLinecap="round"/></svg>
+    <svg style={{position:"absolute",bottom:0,right:0,opacity:.06,pointerEvents:"none"}} width="360" height="260" viewBox="0 0 360 260"><path d="0,200 Q100,100 220,160 Q320,210 380,100" stroke="white" strokeWidth="70" fill="none" strokeLinecap="round"/></svg>
+
+    {/* Logo */}
+    <div style={{display:"flex",alignItems:"center",gap:12,marginBottom:8}}>
+      <Logo size={44} white={true}/>
+      <span style={{fontSize:28,fontWeight:900,color:"#fff",fontFamily:"'Outfit',sans-serif",letterSpacing:"-.02em"}}>LES SHERPAS</span>
+    </div>
+    <div style={{display:"flex",gap:8,marginBottom:32}}>
+      <span style={{background:"rgba(255,255,255,.2)",color:"#fff",borderRadius:99,padding:"4px 14px",fontSize:12,fontWeight:700,fontFamily:"'Outfit',sans-serif"}}>🏔️ Sales Center V5</span>
+      <span style={{background:"rgba(255,255,255,.2)",color:"#fff",borderRadius:99,padding:"4px 14px",fontSize:12,fontWeight:700,fontFamily:"'Outfit',sans-serif"}}>Accès sécurisé 🔒</span>
+    </div>
+
+    {/* Login box */}
+    <div style={{width:"100%",maxWidth:460,background:"rgba(255,255,255,.97)",borderRadius:24,padding:36,boxShadow:"0 24px 80px rgba(0,0,0,.25)"}}>
+      <div style={{textAlign:"center",marginBottom:28}}>
+        <div style={{fontSize:20,fontWeight:900,color:"#18181B",fontFamily:"'Outfit',sans-serif",marginBottom:4}}>Connexion à ton espace</div>
+        <div style={{fontSize:13,color:"#71717A"}}>Sélectionne ton compte puis entre le mot de passe</div>
+      </div>
+
+      {/* Sélection utilisateur */}
+      <div style={{marginBottom:20}}>
+        <div style={{fontSize:12,fontWeight:700,color:"#3F3F46",marginBottom:10,fontFamily:"'Outfit',sans-serif"}}>👤 Ton compte</div>
+        <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:10}}>
+          {USERS.map(u=>{
+            const on=selectedUser?.id===u.id;
+            const roleLabel={sales:"Sales 📞",manager:"Manager 👔",formateur:"Formateur 🎓"}[u.role];
+            return <button key={u.id} onClick={()=>{setSelectedUser(u);setError("");}} style={{
+              padding:"14px 16px",borderRadius:14,
+              border:`2px solid ${on?u.color:"#E4E4E7"}`,
+              background:on?u.color+"10":"#FAFAFA",
+              cursor:"pointer",textAlign:"left",
+              transition:"all .15s",
+            }}>
+              <div style={{display:"flex",alignItems:"center",gap:10}}>
+                <div style={{width:36,height:36,borderRadius:"50%",background:on?u.color:"#E4E4E7",display:"flex",alignItems:"center",justifyContent:"center",fontSize:13,fontWeight:900,color:"#fff",fontFamily:"'Outfit',sans-serif",flexShrink:0}}>{u.avatar}</div>
+                <div>
+                  <div style={{fontSize:14,fontWeight:800,color:on?u.color:"#18181B",fontFamily:"'Outfit',sans-serif"}}>{u.name}</div>
+                  <div style={{fontSize:11,color:"#71717A",marginTop:1}}>{roleLabel}</div>
+                </div>
+              </div>
+              {on&&<div style={{width:8,height:8,borderRadius:"50%",background:u.color,position:"absolute",top:10,right:10}}/>}
+            </button>;
+          })}
+        </div>
+      </div>
+
+      {/* Mot de passe */}
+      <div style={{marginBottom:16}}>
+        <div style={{fontSize:12,fontWeight:700,color:"#3F3F46",marginBottom:8,fontFamily:"'Outfit',sans-serif"}}>🔒 Mot de passe</div>
+        <div style={{position:"relative"}}>
+          <input
+            type={showPwd?"text":"password"}
+            value={pwd}
+            onChange={e=>{setPwd(e.target.value);setError("");}}
+            onKeyDown={e=>e.key==="Enter"&&handleLogin()}
+            placeholder="••••••••••••"
+            style={{width:"100%",fontSize:15,fontWeight:600,border:`2px solid ${error?"#E11D48":"#E4E4E7"}`,borderRadius:12,padding:"12px 48px 12px 16px",boxSizing:"border-box",fontFamily:"'Outfit',sans-serif",color:"#18181B",outline:"none",letterSpacing:".05em"}}
+          />
+          <button onClick={()=>setShowPwd(!showPwd)} style={{position:"absolute",right:12,top:"50%",transform:"translateY(-50%)",background:"none",border:"none",cursor:"pointer",fontSize:16,color:"#71717A"}}>{showPwd?"🙈":"👁️"}</button>
+        </div>
+        {error&&<div style={{fontSize:12,color:"#E11D48",marginTop:6,fontWeight:600,fontFamily:"'Outfit',sans-serif"}}>⚠️ {error}</div>}
+      </div>
+
+      {/* Bouton */}
+      <button onClick={handleLogin} disabled={loading} style={{
+        width:"100%",padding:"14px",borderRadius:99,border:"none",
+        background:loading?"#A1A1AA":"linear-gradient(135deg,#16A34A,#62E58E)",
+        color:"#fff",fontWeight:800,fontSize:15,
+        fontFamily:"'Outfit',sans-serif",cursor:loading?"not-allowed":"pointer",
+        boxShadow:loading?"none":"0 4px 20px rgba(22,163,74,.4)",
+        transition:"all .2s",
+      }}>
+        {loading?"Connexion en cours…":"Se connecter →"}
+      </button>
+
+      <div style={{textAlign:"center",marginTop:16,fontSize:11,color:"#A1A1AA"}}>
+        Accès réservé à l'équipe Sherpas · Toute tentative est enregistrée
+      </div>
+    </div>
+  </div>;
+}
+
+// ═══════════════════════ APP ROOT — SUPABASE ═══════════════════════
+function App(){
+  const [user,setUser]       = useState(null);
+  const [space,setSpace]     = useState(null);
+  const [page,setPage]       = useState(null);
+  const [loading,setLoading] = useState(false);
+  const [dbReady,setDbReady] = useState(false);
+  const [dbError,setDbError] = useState(null);
+
+  // ── State data — pré-chargé avec données locales, remplacé par Supabase ──
+  const [scripts]              = useState(INIT_SCRIPTS);
+  const [objections]           = useState(INIT_OBJECTIONS);
+  const [feedbacks,  setFeedbacks]   = useState(INIT_FEEDBACKS);
+  const [demandes,   setDemandes]    = useState(INIT_DEMANDES);
+  const [rentree,    setRentree]     = useState(INIT_RENTREE);
+  const [suggestions,setSuggestions] = useState(INIT_SUGGESTIONS);
+  const [stock,      setStock]       = useState(INIT_STOCK);
+  const [matchings,  setMatchings]   = useState(INIT_MATCHINGS);
+  const [formations, setFormations]  = useState(FORMATION_DEFAULT);
+  const [extraUsers, setExtraUsers]  = useState([]);
+
+  // ── Chargement Supabase (en arrière-plan, non-bloquant) ──────────────
+  async function loadAll(){
+    setLoading(true); setDbError(null);
+    try {
+      const [fb,ma,dm,rt,sg,sk,cfg] = await Promise.all([
+        sb.from("feedbacks").select("*").order("created_at",{ascending:false}),
+        sb.from("matchings").select("*").order("created_at",{ascending:false}),
+        sb.from("demandes").select("*").order("created_at",{ascending:false}),
+        sb.from("rentree").select("*").order("created_at",{ascending:false}),
+        sb.from("suggestions").select("*").order("created_at",{ascending:false}),
+        sb.from("stock").select("*").order("id"),
+        sb.from("config").select("*"),
+      ]);
+      const anyErr = fb.error||ma.error||dm.error||rt.error||sg.error||sk.error;
+      if(anyErr) throw new Error(anyErr.message);
+      if(fb.data?.length)  setFeedbacks(fb.data.map(rowToFeedback));
+      if(ma.data?.length)  setMatchings(ma.data.map(rowToMatching));
+      if(dm.data?.length)  setDemandes(dm.data.map(rowToDemande));
+      if(rt.data?.length)  setRentree(rt.data.map(rowToRentree));
+      if(sg.data?.length)  setSuggestions(sg.data.map(rowToSuggestion));
+      if(sk.data?.length)  setStock(sk.data.map(rowToStock));
+      // Config : formations et utilisateurs supplémentaires
+      if(cfg.data&&!cfg.error){
+        const fRow=cfg.data.find(r=>r.key==="formations");
+        const uRow=cfg.data.find(r=>r.key==="extra_users");
+        if(fRow?.value) try{setFormations(JSON.parse(fRow.value));}catch(e){}
+        if(uRow?.value) try{setExtraUsers(JSON.parse(uRow.value));}catch(e){}
+      }
+      setDbReady(true);
+    } catch(e){
+      console.warn("Supabase indisponible — mode local actif:",e.message);
+      setDbError(e.message);
+      setDbReady(false);
+    } finally { setLoading(false); }
+  }
+
+  // ── Login SYNCHRONE — affiche l'app immédiatement, charge Supabase après ──
+  function handleLogin(u){
+    const roleToSpace={sales:"sales",manager:"manager",formateur:"formateur"};
+    const roleToPage={sales:"dash",manager:"m-vue",formateur:"f-scripts"};
+    // On set tout en une fois pour un seul re-render
+    setUser(u);
+    setSpace(roleToSpace[u.role]);
+    setPage(roleToPage[u.role]);
+    // Supabase en arrière-plan — ne bloque pas l'affichage
+    setTimeout(()=>loadAll(), 0);
+  }
+
+  function logout(){
+    setUser(null);setSpace(null);setPage(null);
+    setDbReady(false);setDbError(null);
+    // Reset avec données locales
+    setFeedbacks(INIT_FEEDBACKS);setMatchings(INIT_MATCHINGS);
+    setDemandes(INIT_DEMANDES);setRentree(INIT_RENTREE);setSuggestions(INIT_SUGGESTIONS);
+  }
+
+  // ── Temps réel Supabase (seulement si connecté) ────────────────────
+  useEffect(()=>{
+    if(!user||!dbReady) return;
+    const handler=()=>loadAll();
+    const channels=[
+      sb.channel("fb-rt").on("postgres_changes",{event:"INSERT",schema:"public",table:"feedbacks"},handler).subscribe(),
+      sb.channel("ma-rt").on("postgres_changes",{event:"INSERT",schema:"public",table:"matchings"},handler).subscribe(),
+      sb.channel("dm-rt").on("postgres_changes",{event:"INSERT",schema:"public",table:"demandes"},handler).subscribe(),
+      sb.channel("rt-rt").on("postgres_changes",{event:"INSERT",schema:"public",table:"rentree"},handler).subscribe(),
+      sb.channel("sg-rt").on("postgres_changes",{event:"*",schema:"public",table:"suggestions"},handler).subscribe(),
+      sb.channel("sk-rt").on("postgres_changes",{event:"*",schema:"public",table:"stock"},handler).subscribe(),
+    ];
+    return ()=>channels.forEach(c=>{ try{sb.removeChannel(c);}catch(e){} });
+  },[user,dbReady]);
+
+  // ── Fonctions de sauvegarde — écrivent en local ET dans Supabase ──
+  async function addFeedback(f){
+    // Mise à jour locale immédiate
+    setFeedbacks(p=>[f,...p]);
+    // Puis Supabase en arrière-plan
+    try{const row={date:f.date,auteur:f.auteur,anonyme:f.anonyme,client_types:f.clientTypes||[],objections:f.objections||[],bien:f.bien||[],bloque:f.bloque||[],confiance:f.confiance,suggestions:f.suggestions||""};await sb.from("feedbacks").insert(row);}
+    catch(e){console.warn("Supabase write skipped:",e.message);}
+  }
+  async function addMatching(m){
+    setMatchings(p=>[m,...p]);
+    try{const row={date:m.date,auteur:m.auteur,ideal_typ:m.idealTyp,chosen_typ:m.chosenTyp,followed:m.followed,niveau:m.niveau||"",psycho:m.psycho||""};await sb.from("matchings").insert(row);}
+    catch(e){console.warn("Supabase write skipped:",e.message);}
+  }
+  async function addDemande(d){
+    setDemandes(p=>[d,...p]);
+    try{const row={date:d.date,auteur:d.auteur,cp:d.cp,ville:d.ville,matieres:d.matieres||[],niveau:d.niveau,typo:d.typo||[]};await sb.from("demandes").insert(row);}
+    catch(e){console.warn("Supabase write skipped:",e.message);}
+  }
+  async function addRentree(r){
+    setRentree(p=>[r,...p]);
+    try{const row={date:r.date,auteur:r.auteur,famille:r.famille,classe:r.classe,matieres:r.matieres||[],rappel:r.rappel,notes:r.notes||""};await sb.from("rentree").insert(row);}
+    catch(e){console.warn("Supabase write skipped:",e.message);}
+  }
+  async function addSuggestion(s){
+    setSuggestions(p=>[s,...p]);
+    try{const row={date:s.date,auteur:s.auteur,type:s.type,contenu:s.contenu,statut:"pending"};await sb.from("suggestions").insert(row);}
+    catch(e){console.warn("Supabase write skipped:",e.message);}
+  }
+  async function updateSuggestionStatut(id,statut){
+    setSuggestions(p=>p.map(s=>s.id===id?{...s,statut}:s));
+    try{await sb.from("suggestions").update({statut}).eq("id",id);}
+    catch(e){console.warn("Supabase write skipped:",e.message);}
+  }
+  async function deleteSuggestion(id){
+    setSuggestions(p=>p.filter(s=>s.id!==id));
+    try{await sb.from("suggestions").delete().eq("id",id);}
+    catch(e){console.warn("Supabase write skipped:",e.message);}
+  }
+  async function updateStock(newStock){
+    setStock(newStock);
+    try{for(const s of newStock){await sb.from("stock").update({dispo:s.dispo,nb:s.nb}).eq("typ",s.typ);}}
+    catch(e){console.warn("Supabase write skipped:",e.message);}
+  }
+  async function saveFormations(next){
+    setFormations(next);
+    try{await sb.from("config").upsert({key:"formations",value:JSON.stringify(next)},{onConflict:"key"});}
+    catch(e){console.warn("Supabase write skipped:",e.message);}
+  }
+  async function saveExtraUsers(fn){
+    const next=typeof fn==="function"?fn(extraUsers):fn;
+    setExtraUsers(next);
+    try{await sb.from("config").upsert({key:"extra_users",value:JSON.stringify(next)},{onConflict:"key"});}
+    catch(e){console.warn("Supabase write skipped:",e.message);}
+  }
+
+  // ── Guards ────────────────────────────────────────────────────────
+  if(!user||!space||!page) return <LoginScreen onLogin={handleLogin}/>;
+
+  // ── Données filtrées par Sales ────────────────────────────────────
+  const myFeedbacks = user.role==="sales" ? feedbacks.filter(f=>f.auteur===user.name) : feedbacks;
+  const myDemandes  = user.role==="sales" ? demandes.filter(d=>d.auteur===user.name)  : demandes;
+  const myRentree   = user.role==="sales" ? rentree.filter(r=>r.auteur===user.name)   : rentree;
+  const myMatchings = user.role==="sales" ? matchings.filter(m=>m.auteur===user.name) : matchings;
+
+  // ── Bannière statut DB ────────────────────────────────────────────
+  const dbBanner = loading
+    ? <div style={{background:"#EFF6FF",border:"1px solid #BFDBFE",borderRadius:10,padding:"9px 16px",marginBottom:12,fontSize:12,color:"#1D4ED8",display:"flex",alignItems:"center",gap:8}}><div style={{width:14,height:14,border:"2px solid #93C5FD",borderTopColor:"#1D4ED8",borderRadius:"50%",animation:"spin .8s linear infinite",flexShrink:0}}/> Synchronisation avec Supabase…</div>
+    : dbError
+    ? <div style={{background:"#FEF2F2",border:"1px solid #FECACA",borderRadius:10,padding:"9px 16px",marginBottom:12,fontSize:12,color:"#991B1B",display:"flex",justifyContent:"space-between",alignItems:"center"}}><span>⚠️ Mode local — données non synchronisées ({dbError.slice(0,60)}…)</span><button onClick={loadAll} style={{background:"#EF4444",color:"#fff",border:"none",borderRadius:6,padding:"4px 10px",cursor:"pointer",fontSize:11,fontWeight:700,fontFamily:"'Outfit',sans-serif"}}>Réessayer</button></div>
+    : null;
+
+  // ── Pages ─────────────────────────────────────────────────────────
+  const pages={
+    dash:      ()=><SalesDash rentree={myRentree} user={user}/>,
+    lanterne:  ()=><SalesLanterne stock={stock} setMatchings={addMatching} user={user}/>,
+    scripts:   ()=><SalesScripts scripts={scripts}/>,
+    objections:()=><SalesObjections objections={objections} setSuggestions={(s)=>addSuggestion(s)}/>,
+    formation: ()=><SalesFormation formations={formations}/>,
+    feedback:  ()=><SalesFeedback feedbacks={myFeedbacks} setFeedbacks={addFeedback} setSuggestions={addSuggestion} user={user}/>,
+    demandes:  ()=><SalesDemandes demandes={myDemandes} setDemandes={addDemande} user={user}/>,
+    rentree:   ()=><SalesRentree rentree={myRentree} setRentree={addRentree} user={user}/>,
+    "m-vue":        ()=><ManagerVue feedbacks={feedbacks} rentree={rentree} matchings={matchings}/>,
+    "m-matching":   ()=><ManagerMatching matchings={matchings}/>,
+    "m-besoins":    ()=><ManagerBesoins feedbacks={feedbacks}/>,
+    "m-rentree":    ()=><ManagerRentree rentree={rentree}/>,
+    "m-feedback":   ()=><ManagerFeedbacks feedbacks={feedbacks}/>,
+    "m-progression":()=><ManagerProgression matchings={matchings}/>,
+    "m-users":      ()=><ManagerUsers extraUsers={extraUsers} setExtraUsers={saveExtraUsers}/>,
+    "f-scripts":    ()=><FormateurScripts scripts={scripts} setScripts={()=>{}}/>,
+    "f-formations": ()=><FormateurFormations formations={formations} setFormations={saveFormations}/>,
+    "f-stock":      ()=><FormateurStock stock={stock} setStock={updateStock}/>,
+    "f-suggestions":()=><FormateurSuggestions suggestions={suggestions} setSuggestions={setSuggestions} updateStatut={updateSuggestionStatut} deleteSugg={deleteSuggestion}/>,
+    "f-users":      ()=><FormateurUsers/>,
+  };
+  const Page=pages[page]||(()=>null);
+
+  return <div style={{display:"flex",height:"100vh",fontFamily:"'Inter',sans-serif",background:"#F8FFF9"}}>
+    <SidebarWithUser role={space} page={page} setPage={setPage} onLogout={logout} user={user} dbReady={dbReady} loading={loading}/>
+    <div style={{flex:1,overflow:"auto",padding:26}}>
+      {dbBanner}
+      <Page/>
+    </div>
+  </div>;
+}
+
+ReactDOM.createRoot(document.getElementById('root')).render(<App/>);
+if(window.__clearLoadingInterval) window.__clearLoadingInterval();
+document.getElementById('loading').style.opacity='0';
+setTimeout(()=>document.getElementById('loading').style.display='none',500);
+</script>
+</body>
+</html>
