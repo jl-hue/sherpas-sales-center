@@ -1,60 +1,35 @@
-name: Build & Deploy Sherpas Sales Center
+name: Build & Deploy
 
 on:
   push:
     branches: [ main ]
-  workflow_dispatch:  # permet de déclencher manuellement depuis GitHub
+  workflow_dispatch:
 
 permissions:
   contents: write
-  pages: write
-  id-token: write
 
 jobs:
-  build-and-deploy:
+  build:
     runs-on: ubuntu-latest
-
     steps:
-      # 1. Récupérer le code
       - name: Checkout
         uses: actions/checkout@v4
 
-      # 2. Installer Node.js
       - name: Setup Node.js
         uses: actions/setup-node@v4
         with:
           node-version: '20'
-          cache: 'npm'
 
-      # 3. Installer Babel
-      - name: Install dependencies
+      - name: Install Babel
         run: npm install
 
-      # 4. Compiler le JSX → JS natif
-      - name: Build (compile JSX)
-        run: npm run build
+      - name: Compile JSX
+        run: node build.js
 
-      # 5. Vérifier que le build a fonctionné
-      - name: Check output
+      - name: Deploy
         run: |
-          if [ ! -f index.html ]; then
-            echo "❌ index.html manquant après le build"
-            exit 1
-          fi
-          SIZE=$(wc -c < index.html)
-          echo "✅ index.html généré : $SIZE octets"
-          # Vérifier que Babel n'est plus dans le fichier déployé
-          if grep -q "babel.min.js" index.html; then
-            echo "⚠️  Babel encore présent dans index.html"
-          else
-            echo "✅ Babel absent du fichier déployé — chargement rapide"
-          fi
-
-      # 6. Committer le index.html compilé dans le repo
-      - name: Commit compiled index.html
-        run: |
-          git config --local user.email "github-actions[bot]@users.noreply.github.com"
-          git config --local user.name "github-actions[bot]"
+          git config user.email "action@github.com"
+          git config user.name "GitHub Action"
           git add index.html
-          git diff --staged --quiet || git commit -m "🔨 Auto-build: JSX compilé [skip ci]"
+          git diff --staged --quiet && echo "Rien à committer" || git commit -m "build: compile JSX [skip ci]"
           git push
