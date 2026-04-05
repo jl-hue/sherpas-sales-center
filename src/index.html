@@ -4,7 +4,7 @@
 <meta charset="UTF-8"/><meta name="viewport" content="width=device-width,initial-scale=1.0"/>
 <title>🏔️ Sherpas Sales Center V5</title>
 <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@400;500;600;700;800;900&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet"/>
-
+ 
 <!-- Cache check : si compilé en cache, Babel ne sera pas chargé du tout -->
 <script>
 (function(){
@@ -21,12 +21,12 @@
   window.__CACHE_VER_KEY = VER_KEY;
 })();
 </script>
-
+ 
 <!-- React + Supabase : toujours nécessaires, petits, en parallèle -->
 <link rel="preload" as="script" href="https://cdnjs.cloudflare.com/ajax/libs/react/18.2.0/umd/react.production.min.js"/>
 <link rel="preload" as="script" href="https://cdnjs.cloudflare.com/ajax/libs/react-dom/18.2.0/umd/react-dom.production.min.js"/>
 <link rel="preload" as="script" href="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.min.js"/>
-
+ 
 <script src="https://cdnjs.cloudflare.com/ajax/libs/react/18.2.0/umd/react.production.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.min.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/react-dom/18.2.0/umd/react-dom.production.min.js"></script>
@@ -76,16 +76,16 @@ window.__clearLoading = function(){
 };
 </script>
 <div id="root"></div>
-
+ 
 <!-- Source JSX stocké comme données, pas exécuté directement -->
 <script type="text/jsx-source" id="app-source">
 const {useState,useMemo,useCallback,useEffect,useRef}=React;
-
+ 
 // ═══════════════════════ SUPABASE ═══════════════════════
 const SUPABASE_URL = "https://ytksakftecupnlarhpld.supabase.co";
 const SUPABASE_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Inl0a3Nha2Z0ZWN1cG5sYXJocGxkIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzUzMjg2NzYsImV4cCI6MjA5MDkwNDY3Nn0.HZyTIkZhR7jyyxnZmTeW8mX5ESn8NUHDvvPCnMfTaa4";
 const sb = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
-
+ 
 // Helper : convertit les noms de colonnes snake_case → camelCase pour les feedbacks
 function rowToFeedback(r){return{id:r.id,date:r.date,auteur:r.auteur,anonyme:r.anonyme,clientTypes:r.client_types||[],objections:r.objections||[],bien:r.bien||[],bloque:r.bloque||[],confiance:r.confiance,suggestions:r.suggestions||""};}
 function rowToMatching(r){return{id:r.id,date:r.date,auteur:r.auteur,idealTyp:r.ideal_typ,chosenTyp:r.chosen_typ,followed:r.followed,niveau:r.niveau,psycho:r.psycho};}
@@ -93,10 +93,10 @@ function rowToStock(r){return{typ:r.typ,dispo:r.dispo,nb:r.nb,note:r.note||""};}
 function rowToSuggestion(r){return{id:r.id,date:r.date,auteur:r.auteur,type:r.type,contenu:r.contenu,statut:r.statut};}
 function rowToDemande(r){return{id:r.id,date:r.date,auteur:r.auteur,cp:r.cp,ville:r.ville,matieres:r.matieres||[],niveau:r.niveau,typo:r.typo||[]};}
 function rowToRentree(r){return{id:r.id,date:r.date,auteur:r.auteur,famille:r.famille,classe:r.classe,matieres:r.matieres||[],rappel:r.rappel,notes:r.notes||""};}
-
+ 
 // Composant écran de chargement
 function LoadingOverlay(){return <div style={{position:"fixed",inset:0,background:"rgba(255,255,255,.85)",backdropFilter:"blur(4px)",display:"flex",flexDirection:"column",alignItems:"center",justifyContent:"center",zIndex:9998}}><div style={{width:40,height:40,border:"3px solid #C0EAD3",borderTopColor:"#16A34A",borderRadius:"50%",animation:"spin .8s linear infinite"}}/><div style={{marginTop:14,fontSize:14,fontWeight:600,color:"#16A34A",fontFamily:"'Outfit',sans-serif"}}>Synchronisation Supabase…</div></div>;}
-
+ 
 // ═══════════════════════ BRAND ═══════════════════════
 const B={
   sales:    {primary:"#16A34A",light:"#E1FFED",pale:"#F0FDF4",sidebar:"#0D1F12",accent:"#3BC47F",label:"Sales",    emoji:"📞"},
@@ -109,16 +109,16 @@ const Logo=({size=28,white=false})=>(
     <rect x="10" y="18" width="38" height="13" rx="6.5" fill={white?"rgba(255,255,255,.65)":"#16A34A"}/>
   </svg>
 );
-
+ 
 // ═══════════════════════ MATCHING ENGINE V5 ═══════════════════════
 const PROF_TYPES=["Étudiant grande école","Étudiant université","Professeur EN","AESH","Professeur certifié","Formateur"];
-
+ 
 const PSYCH_PROFILES=["Introverti / Réservé","Décrocheur / Démotivé","Compétiteur / Haut Potentiel","Stressé / Anxieux"];
 const VIE_OBJECTIFS=["Remise à niveau","Réussite concours","Méthodologie pure","Excellence académique"];
 const NIVEAUX=["Primaire","Collège","Lycée général","Lycée pro","BTS / IUT","Prépa","Université"];
 const MATIERES=["Maths","Français","Anglais","Physique","Chimie","SVT","Histoire-Géo","Philosophie","Espagnol","Allemand","Économie","Informatique","Autre"];
 const OBJECTIFS_OLD=["Excellence","Remise à niveau","Méthode de travail","Confiance en soi","Prépa examen"];
-
+ 
 const RULES={
   niveau:{"Primaire":{"Professeur EN":35,"Étudiant université":20},"Collège":{"Professeur EN":25,"Étudiant université":20,"Étudiant grande école":10},"Lycée général":{"Étudiant grande école":30,"Professeur certifié":20},"Lycée pro":{"Professeur EN":25,"Formateur":20},"BTS / IUT":{"Étudiant université":30,"Professeur certifié":20},"Prépa":{"Étudiant grande école":45},"Université":{"Étudiant grande école":35,"Étudiant université":25}},
   psycho:{"Introverti / Réservé":{"Étudiant université":35,"Étudiant grande école":15},"Décrocheur / Démotivé":{"Étudiant université":45,"Étudiant grande école":10},"Compétiteur / Haut Potentiel":{"Étudiant grande école":55,"Professeur certifié":20},"Stressé / Anxieux":{"Étudiant université":30,"Étudiant grande école":20,"AESH":10}},
@@ -126,7 +126,7 @@ const RULES={
   accomp_douceur:{"Étudiant université":30,"AESH":25,"Étudiant grande école":10},
   accomp_fermete:{"Professeur EN":35,"Professeur certifié":25,"Formateur":20},
 };
-
+ 
 function computeV5(niveau,psycho,objectif_vie,accomp){
   const s=Object.fromEntries(PROF_TYPES.map(k=>[k,0]));
   const add=(r)=>{if(r)Object.entries(r).forEach(([k,v])=>{s[k]=(s[k]||0)+v;});};
@@ -136,7 +136,7 @@ function computeV5(niveau,psycho,objectif_vie,accomp){
   Object.entries(RULES.accomp_fermete).forEach(([k,v])=>{s[k]=(s[k]||0)+(v*fermetW);});
   return Object.entries(s).sort((a,b)=>b[1]-a[1]).map(([typ,score])=>({typ,score}));
 }
-
+ 
 // PROF LABELS — personality archetypes
 const PROF_LABELS={
   "Étudiant grande école":{
@@ -153,7 +153,7 @@ const PROF_LABELS={
   "Formateur":{"default":"Expert méthodes & organisation"},
 };
 function getLabel(typ,psycho){return PROF_LABELS[typ]?.[psycho]||PROF_LABELS[typ]?.default||typ;}
-
+ 
 // REFINEMENTS (matières → précision)
 const REFINE={
   "Étudiant grande école":{
@@ -172,7 +172,7 @@ function refine(typ,matieres){
   for(const m of(matieres||[]))if(map[m])return map[m];
   return map.default||typ;
 }
-
+ 
 // ═══════ ARGUMENT ENGINE ═══════════════════════════════════════════
 const ARG_ENGINE={
   "Étudiant grande école":{
@@ -314,12 +314,12 @@ const ARG_ENGINE={
     },
   },
 };
-
+ 
 function getArgs(typ,psycho){
   const p=ARG_ENGINE[typ];if(!p)return null;
   return p[psycho]||p.default||null;
 }
-
+ 
 // ═══════════════════════ DATA ═══════════════════════
 const INIT_STOCK=[
   {typ:"Étudiant grande école",dispo:true,nb:47,note:"Profil le plus demandé"},
@@ -374,7 +374,7 @@ const INIT_SUGGESTIONS=[
 ];
 function today(){return new Date().toISOString().split("T")[0];}
 function cArr(arr,key){const m={};arr.forEach(f=>(f[key]||[]).forEach(v=>{m[v]=(m[v]||0)+1;}));return Object.entries(m).sort((a,b)=>b[1]-a[1]);}
-
+ 
 // ═══════════════════════ COMPTES UTILISATEURS ═══════════════════════
 const PASSWORD="Sherpas2026";
 const USERS=[
@@ -383,7 +383,7 @@ const USERS=[
   {id:"manager",  name:"Manager",  prenom:"Manager",  role:"manager",   avatar:"M", color:"#7C3AED",email:"manager@sherpas.com"},
   {id:"formateur",name:"Formateur",prenom:"Formateur",role:"formateur", avatar:"F", color:"#DA4F00",email:"formateur@sherpas.com"},
 ];
-
+ 
 // ═══════════════════════ UI ATOMS ═══════════════════════
 const C=({children,style={}})=><div style={{background:"#fff",borderRadius:16,border:"1px solid #E4E4E7",padding:20,...style}}>{children}</div>;
 const GC=({children,style={}})=><div style={{background:"linear-gradient(135deg,#16A34A 0%,#62E58E 100%)",borderRadius:16,padding:20,border:"none",...style}}>{children}</div>;
@@ -393,14 +393,14 @@ const Tog=({value,onChange,color="#16A34A"})=><button onClick={()=>onChange(!val
 const Chips=({options,selected,onChange,color="#16A34A",single=false})=><div style={{display:"flex",flexWrap:"wrap",gap:7}}>{options.map(o=>{const on=single?selected===o:(selected||[]).includes(o);return <button key={o} onClick={()=>single?onChange(on?"":o):onChange(on?(selected||[]).filter(x=>x!==o):[...(selected||[]),o])} style={{padding:"6px 14px",borderRadius:99,border:`2px solid ${on?color:"#E4E4E7"}`,background:on?color+"12":"#fff",color:on?color:"#71717A",fontSize:12,fontWeight:on?700:400,cursor:"pointer",transition:"all .15s"}}>{on?"✓ ":""}{o}</button>;})}</div>;
 const ST=({children,sub,emoji})=><div style={{marginBottom:22}}><h1 style={{fontSize:22,fontWeight:900,color:"#18181B",margin:"0 0 4px",fontFamily:"'Outfit',sans-serif",display:"flex",alignItems:"center",gap:8}}>{emoji&&<span>{emoji}</span>}{children}</h1>{sub&&<p style={{color:"#71717A",margin:0,fontSize:13}}>{sub}</p>}</div>;
 const Stat=({icon,label,value,sub,color="#16A34A"})=><C style={{display:"flex",gap:12,alignItems:"center"}}><div style={{width:46,height:46,borderRadius:14,background:`linear-gradient(135deg,${color},${color}CC)`,display:"flex",alignItems:"center",justifyContent:"center",fontSize:19,flexShrink:0,boxShadow:`0 4px 12px ${color}40`}}>{icon}</div><div><div style={{fontSize:22,fontWeight:900,color:"#18181B",lineHeight:1,fontFamily:"'Outfit',sans-serif"}}>{value}</div><div style={{fontSize:12,fontWeight:600,color:"#3F3F46",marginTop:2}}>{label}</div>{sub&&<div style={{fontSize:11,color:"#A1A1AA",marginTop:1}}>{sub}</div>}</div></C>;
-
+ 
 // Copy script helper
 function CopyBtn({text}){
   const [copied,setCopied]=useState(false);
   function copy(){navigator.clipboard.writeText(text).then(()=>{setCopied(true);setTimeout(()=>setCopied(false),2000);}).catch(()=>{const ta=document.createElement("textarea");ta.value=text;document.body.appendChild(ta);ta.select();document.execCommand("copy");document.body.removeChild(ta);setCopied(true);setTimeout(()=>setCopied(false),2000);});}
   return <button onClick={copy} className="copy-btn" style={{padding:"7px 16px",borderRadius:99,border:"none",background:copied?"#16A34A":"#18181B",color:"#fff",fontWeight:700,fontSize:12,cursor:"pointer",fontFamily:"'Outfit',sans-serif",display:"flex",alignItems:"center",gap:6,flexShrink:0}}>{copied?"✓ Copié !":"📋 Copier le script"}</button>;
 }
-
+ 
 // ═══════════════════════ SIDEBAR ═══════════════════════
 function Sidebar({role,page,setPage,onExit}){
   const th=B[role];
@@ -420,13 +420,13 @@ function Sidebar({role,page,setPage,onExit}){
     <div style={{padding:"10px 14px",borderTop:"1px solid rgba(255,255,255,.08)"}}><button onClick={onExit} style={{background:"transparent",border:"none",color:"rgba(255,255,255,.3)",fontSize:11,cursor:"pointer",fontFamily:"'Inter',sans-serif"}}>← Changer d'espace</button></div>
   </div>;
 }
-
+ 
 // ═══════════════════════ MATRICE NEUROATYPIQUES ═══════════════════════
 const NEURO_PROFS=["Psychologue","Prof EN Psychopédagogie","Professeur EN classique","AESH / AVS","Étudiant en Psychologie"];
 const NEURO_TROUBLES=["TDAH","TSA","DYS","HPI","Multi-dys / profil complexe"];
 const NEURO_COLORS={TDAH:"#0B68B4",TSA:"#7C3AED",DYS:"#DA4F00",HPI:"#D97706","Multi-dys / profil complexe":"#E11D48"};
 const NEURO_EMOJIS={TDAH:"⚡",TSA:"🧩",DYS:"📖",HPI:"🌟","Multi-dys / profil complexe":"🔀"};
-
+ 
 const NEURO_MATRIX=[
   // ── PSYCHOLOGUE ──────────────────────────────────────────────────
   {prof:"Psychologue",trouble:"TDAH",badge:"ideal",
@@ -444,7 +444,7 @@ const NEURO_MATRIX=[
   {prof:"Psychologue",trouble:"Multi-dys / profil complexe",badge:"ideal",
    realite:"Face à un profil complexe, le psychologue est le seul profil capable d'une lecture globale — cognitive, émotionnelle et comportementale — sans réduire l'élève à une seule étiquette.",
    appel:"'Quand un enfant a plusieurs troubles à la fois, il faut quelqu'un qui voit le tableau complet. Notre psychologue, c'est exactement ça — un chef d'orchestre qui comprend chaque instrument.'"},
-
+ 
   // ── PROF EN PSYCHOPÉDAGOGIE ──────────────────────────────────────
   {prof:"Prof EN Psychopédagogie",trouble:"TDAH",badge:"ideal",
    realite:"La double formation pédagogie + psychologie en fait le profil le plus complet : il sait à la fois adapter les exercices ET comprendre les dynamiques attentionnelles.",
@@ -461,7 +461,7 @@ const NEURO_MATRIX=[
   {prof:"Prof EN Psychopédagogie",trouble:"Multi-dys / profil complexe",badge:"ideal",
    realite:"C'est le profil idéal pour les cas complexes : il lit plusieurs troubles simultanément, adapte en continu et comprend les interactions entre les différents déficits.",
    appel:"'Quand le bilan révèle plusieurs troubles qui s'additionnent, il faut quelqu'un de très spécialisé. Notre prof en psychopédagogie, c'est précisément sa spécialité — les profils qu'on ne sait pas comment aborder.'"},
-
+ 
   // ── PROFESSEUR EN CLASSIQUE ──────────────────────────────────────
   {prof:"Professeur EN classique",trouble:"TDAH",badge:"acceptable",
    realite:"Sa pédagogie structurée peut aider, mais sans formation aux troubles attentionnels, il risque de mal interpréter l'agitation ou l'oubli comme du manque de volonté.",
@@ -478,7 +478,7 @@ const NEURO_MATRIX=[
   {prof:"Professeur EN classique",trouble:"Multi-dys / profil complexe",badge:"deconseille",
    realite:"Un profil multi-dys requiert des adaptations simultanées sur plusieurs axes. Sans formation spécialisée, le prof classique ne peut pas gérer cette complexité sans mettre l'élève en échec.",
    appel:"'Je vais être direct : pour un profil aussi complexe, ce n'est pas le bon match. Je préfère prendre le temps de trouver le bon profil plutôt que de vous proposer quelqu'un qui ne pourra pas répondre aux besoins réels.'"},
-
+ 
   // ── AESH / AVS ───────────────────────────────────────────────────
   {prof:"AESH / AVS",trouble:"TDAH",badge:"ideal",
    realite:"L'AESH est formé à l'accompagnement de proximité, à la gestion des impulsions et à la régulation émotionnelle. C'est le profil le plus adapté pour soutenir sans surcharger.",
@@ -495,7 +495,7 @@ const NEURO_MATRIX=[
   {prof:"AESH / AVS",trouble:"Multi-dys / profil complexe",badge:"ideal",
    realite:"L'AESH est formé à l'adaptation continue et à la flexibilité. Face à un profil complexe, il ajuste séance par séance sans chercher à 'normaliser' l'élève.",
    appel:"'Notre AESH n'a pas de méthode rigide — il s'adapte à l'enfant tel qu'il est ce jour-là. Pour un profil complexe qui change d'une semaine à l'autre, c'est précisément ce qu'il faut.'"},
-
+ 
   // ── ÉTUDIANT EN PSYCHOLOGIE ──────────────────────────────────────
   {prof:"Étudiant en Psychologie",trouble:"TDAH",badge:"acceptable",
    realite:"Il a les bases théoriques et une vraie empathie, mais son expérience pratique est limitée. Il peut être très efficace si le TDAH n'est pas sévère et si la relation est bonne.",
@@ -513,36 +513,36 @@ const NEURO_MATRIX=[
    realite:"Un profil complexe requiert une expertise clinique confirmée. L'étudiant, même motivé, n'a pas encore les outils pour naviguer la complexité des interactions entre les différents troubles.",
    appel:"'Pour un profil aussi complexe, je dois vous proposer quelqu'un avec plus d'expérience. Je préfère prendre le temps de bien choisir plutôt que de vous orienter vers quelqu'un qui ne pourra pas être à la hauteur de la situation.'"},
 ];
-
+ 
 function MatriceNeuro(){
   const [filtreProf,setFiltreProf]=useState("Tous");
   const [filtreTrouble,setFiltreTrouble]=useState("Tous");
   const [expanded,setExpanded]=useState(null);
-
+ 
   const filtered=NEURO_MATRIX.filter(r=>{
     if(filtreProf!=="Tous"&&r.prof!==filtreProf) return false;
     if(filtreTrouble!=="Tous"&&r.trouble!==filtreTrouble) return false;
     return true;
   });
-
+ 
   const BADGE={
     ideal:  {label:"✅ Idéal",     bg:"#D1FAE5",color:"#15803D",border:"#86EFAC"},
     acceptable:{label:"⚠️ Acceptable",bg:"#FEF9C3",color:"#854D0E",border:"#FDE047"},
     deconseille:{label:"❌ Déconseillé",bg:"#FEE2E2",color:"#991B1B",border:"#FCA5A5"},
   };
-
+ 
   return <div>
     {/* En-tête */}
     <div style={{marginBottom:18}}>
       <div style={{fontSize:15,fontWeight:800,color:"#18181B",fontFamily:"'Outfit',sans-serif",marginBottom:3}}>🧠 Matrice Neuroatypiques</div>
       <div style={{fontSize:12,color:"#71717A"}}>Matching prof × trouble — Réalité + argument commercial</div>
     </div>
-
+ 
     {/* Légende */}
     <div style={{display:"flex",gap:8,marginBottom:14,flexWrap:"wrap"}}>
       {Object.values(BADGE).map(b=><span key={b.label} style={{fontSize:11,padding:"3px 10px",borderRadius:99,background:b.bg,color:b.color,border:`1px solid ${b.border}`,fontWeight:700}}>{b.label}</span>)}
     </div>
-
+ 
     {/* Filtres */}
     <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:10,marginBottom:16}}>
       <div>
@@ -560,10 +560,10 @@ function MatriceNeuro(){
         </select>
       </div>
     </div>
-
+ 
     {/* Compteur */}
     <div style={{fontSize:11,color:"#A1A1AA",marginBottom:10}}>{filtered.length} combinaison{filtered.length>1?"s":""} affichée{filtered.length>1?"s":""}</div>
-
+ 
     {/* Cartes */}
     <div style={{display:"flex",flexDirection:"column",gap:9}}>
       {filtered.map((r,i)=>{
@@ -588,7 +588,7 @@ function MatriceNeuro(){
               <span style={{fontSize:14,color:b.color,flexShrink:0}}>{open?"▲":"▼"}</span>
             </div>
           </button>
-
+ 
           {open&&<div style={{padding:"0 16px 16px"}}>
             <div style={{height:1,background:b.border,marginBottom:12}}/>
             {/* Réalité */}
@@ -611,7 +611,7 @@ function MatriceNeuro(){
     </div>
   </div>;
 }
-
+ 
 // ═══════════════════════ 🔦 LANTERNE V5 ═══════════════════════
 function SalesLanterne({stock,setMatchings,user}){
   const [activeTab,setActiveTab]=useState("prescription");
@@ -630,10 +630,10 @@ function SalesLanterne({stock,setMatchings,user}){
   const [chosenB,setChosenB]=useState("");
   const [activeOption,setActiveOption]=useState("A");
   const [scriptGenerated,setScriptGenerated]=useState(false);
-
+ 
   const stockMap=Object.fromEntries(stock.map(s=>[s.typ,s]));
   const canAnalyze=niveau&&psycho&&objectifVie;
-
+ 
   function analyze(){
     const p=computeV5(niveau,psycho,objectifVie,accomp);
     setPortrait(p);
@@ -642,7 +642,7 @@ function SalesLanterne({stock,setMatchings,user}){
     setScriptGenerated(false);
   }
   function reset(){setStep(1);setPortrait(null);setChosenB("");setActiveOption("A");setScriptGenerated(false);setPrenom("");setNiveau("");setMatieres([]);setPsycho("");setAccomp(5);setObjectifVie("");setSouhaitParent("");}
-
+ 
   async function generateScript(){
     setScriptGenerated(true);
     const idealTyp=portrait[0].typ;
@@ -650,10 +650,10 @@ function SalesLanterne({stock,setMatchings,user}){
     const followed=activeOption==="A";
     await setMatchings({id:Date.now(),date:today(),auteur:user?.name||"Moi",idealTyp,chosenTyp,followed,niveau,psycho});
   }
-
+ 
   const accompLabel=accomp<=3?"Douceur & Empathie":accomp>=7?"Fermeté & Cadre":"Équilibre";
   const accompColor=accomp<=3?"#16A34A":accomp>=7?"#DA4F00":"#0B68B4";
-
+ 
   // ─── STEP 1: Formulaire ───────────────────────────────────────
   if(step===1||step===2) return <div>
     {/* Onglets */}
@@ -665,20 +665,20 @@ function SalesLanterne({stock,setMatchings,user}){
         </button>
       ))}
     </div>
-
+ 
     {/* Tab Neuroatypiques */}
     {activeTab==="neuro"&&<MatriceNeuro/>}
-
+ 
     {/* Tab Prescription */}
     {activeTab==="prescription"&&step===1&&<div>
     <ST emoji="🔦" sub="Le cerveau stratégique de l'application — prescription & argumentation dynamique.">Lanterne Match V5</ST>
-
+ 
     {/* Prénom */}
     <C style={{marginBottom:12}}>
       <div style={{fontSize:13,fontWeight:700,color:"#18181B",marginBottom:8,fontFamily:"'Outfit',sans-serif"}}>👤 Prénom de l'élève <span style={{fontSize:12,fontWeight:400,color:"#A1A1AA"}}>(optionnel, personnalise les scripts)</span></div>
       <input value={prenom} onChange={e=>setPrenom(e.target.value)} placeholder="Ex : Lucas, Emma, Thomas..." style={{width:"100%",fontSize:14,border:"1px solid #E4E4E7",borderRadius:10,padding:"10px 14px",boxSizing:"border-box",fontFamily:"'Outfit',sans-serif",fontWeight:600,color:"#18181B"}}/>
     </C>
-
+ 
     {/* Diagnostic académique */}
     <C style={{marginBottom:12}}>
       <div style={{fontSize:14,fontWeight:800,color:"#18181B",marginBottom:16,fontFamily:"'Outfit',sans-serif",display:"flex",alignItems:"center",gap:8}}>📚 Diagnostic académique</div>
@@ -692,7 +692,7 @@ function SalesLanterne({stock,setMatchings,user}){
         <Chips options={MATIERES} selected={matieres} onChange={setMatieres} color="#DA4F00"/>
       </div>
     </C>
-
+ 
     {/* Profil psychologique — NOUVEAU */}
     <C style={{marginBottom:12,borderLeft:"4px solid #16A34A"}}>
       <div style={{fontSize:14,fontWeight:800,color:"#18181B",marginBottom:4,fontFamily:"'Outfit',sans-serif",display:"flex",alignItems:"center",gap:8}}>🧠 Profil Psychologique <span style={{fontSize:11,background:"#E1FFED",color:"#16A34A",borderRadius:99,padding:"2px 8px",fontWeight:700}}>NOUVEAU V5</span></div>
@@ -708,7 +708,7 @@ function SalesLanterne({stock,setMatchings,user}){
         })}
       </div>
     </C>
-
+ 
     {/* Besoin d'accompagnement — NOUVEAU */}
     <C style={{marginBottom:12}}>
       <div style={{fontSize:14,fontWeight:800,color:"#18181B",marginBottom:4,fontFamily:"'Outfit',sans-serif",display:"flex",alignItems:"center",gap:8}}>⚖️ Besoin d'accompagnement <span style={{fontSize:11,background:"#E1FFED",color:"#16A34A",borderRadius:99,padding:"2px 8px",fontWeight:700}}>NOUVEAU V5</span></div>
@@ -720,7 +720,7 @@ function SalesLanterne({stock,setMatchings,user}){
         <span style={{fontSize:12,color:"#DA4F00",fontWeight:700}}>💪 Fermeté / Cadre</span>
       </div>
     </C>
-
+ 
     {/* Objectif de vie — NOUVEAU */}
     <C style={{marginBottom:12}}>
       <div style={{fontSize:14,fontWeight:800,color:"#18181B",marginBottom:4,fontFamily:"'Outfit',sans-serif",display:"flex",alignItems:"center",gap:8}}>🎯 Objectif de vie <span style={{fontSize:11,background:"#E1FFED",color:"#16A34A",borderRadius:99,padding:"2px 8px",fontWeight:700}}>NOUVEAU V5</span></div>
@@ -736,25 +736,25 @@ function SalesLanterne({stock,setMatchings,user}){
         })}
       </div>
     </C>
-
+ 
     {/* Souhait parent */}
     <C style={{marginBottom:14}}>
       <div style={{fontSize:13,fontWeight:700,color:"#18181B",marginBottom:4,fontFamily:"'Outfit',sans-serif"}}>👨‍👩‍👧 Souhait du parent <span style={{fontSize:12,fontWeight:400,color:"#A1A1AA"}}>(optionnel)</span></div>
       <div style={{fontSize:12,color:"#71717A",marginBottom:10}}>Quel type de prof demande-t-il ? (influence l'option B)</div>
       <Chips options={["Pas d'avis",...PROF_TYPES]} selected={souhaitParent} onChange={setSouhaitParent} color="#DA4F00" single={true}/>
     </C>
-
+ 
     {/* Stock */}
     <C style={{marginBottom:14,background:"#F0FDF4",border:"1px solid #C0EAD3",padding:"12px 16px"}}>
       <div style={{display:"flex",alignItems:"center",gap:8,marginBottom:7}}><Logo size={15}/><span style={{fontSize:12,fontWeight:700,color:"#15803D",fontFamily:"'Outfit',sans-serif"}}>Stock plateforme Sherpas (temps réel)</span></div>
       <div style={{display:"flex",flexWrap:"wrap",gap:5}}>{stock.map(s=><span key={s.typ} style={{fontSize:11,padding:"3px 10px",borderRadius:99,background:s.dispo?"#D1FAE5":"#FEE2E2",color:s.dispo?"#15803D":"#B91C1C",fontWeight:600,border:`1px solid ${s.dispo?"#86EFAC":"#FCA5A5"}`}}>{s.dispo?"✓":"✗"} {s.typ} ({s.nb})</span>)}</div>
     </C>
-
+ 
     {!canAnalyze&&<div style={{fontSize:12,color:"#A1A1AA",marginBottom:10,textAlign:"center"}}>Remplis niveau, profil psychologique et objectif de vie pour continuer</div>}
     <Btn onClick={analyze} disabled={!canAnalyze} full color="#16A34A" style={{padding:"13px",borderRadius:99,fontSize:15}}>🔦 Allumer la Lanterne V5 →</Btn>
   </div>}{/* fin step 1 prescription */}
   </div>;/* fin wrapper onglets step 1 */
-
+ 
   // ─── STEP 2: Dual Path + Arguments ───────────────────────────
   if(!portrait) return null;
   return <div>
@@ -773,31 +773,31 @@ function SalesLanterne({stock,setMatchings,user}){
   const idealLabel=getLabel(idealTyp,psycho);
   const idealRefined=refine(idealTyp,matieres);
   const idealDispo=stockMap[idealTyp]?.dispo;
-
+ 
   const chosenTyp=activeOption==="A"?idealTyp:chosenB;
   const chosenLabel=getLabel(chosenTyp,psycho);
   const chosenRefined=refine(chosenTyp,matieres);
   const args=getArgs(chosenTyp,psycho);
   const nom=prenom||"l'élève";
-
+ 
   function injectPrenom(text){return text.replace(/\[Prénom\]/g,prenom||"votre enfant").replace(/\[nom\]/g,prenom||"votre enfant");}
-
+ 
   const fullScript=args?`🎯 SCRIPT PERSONNALISÉ — ${chosenLabel}
 Profil : ${chosenRefined}
 Élève : ${nom} | Psycho : ${psycho} | Objectif : ${objectifVie}
-
+ 
 🪝 LE CROCHET
 ${injectPrenom(args.hook)}
-
+ 
 🏆 L'ARGUMENT DE CONFIANCE
 ${injectPrenom(args.trust)}
-
+ 
 🌉 LE PONT PÉDAGOGIQUE
 ${injectPrenom(args.bridge)}
-
+ 
 ↩️ L'ARGUMENT DE REBOND
 ${injectPrenom(args.rebound)}`:"";
-
+ 
   return <div>
     <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:20}}>
       <div>
@@ -806,10 +806,10 @@ ${injectPrenom(args.rebound)}`:"";
       </div>
       <Btn onClick={reset} outline color="#71717A" sm>← Nouveau</Btn>
     </div>
-
+ 
     {/* ── DUAL PATH ── */}
     <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:14,marginBottom:16}}>
-
+ 
       {/* OPTION A — Idéal Sherpas */}
       <button onClick={()=>setActiveOption("A")} style={{borderRadius:16,border:`2px solid ${activeOption==="A"?"#16A34A":"#E4E4E7"}`,background:activeOption==="A"?"#F0FDF4":"#fff",padding:18,textAlign:"left",cursor:"pointer",transition:"all .2s",position:"relative"}}>
         {activeOption==="A"&&<div style={{position:"absolute",top:10,right:10,width:22,height:22,borderRadius:"50%",background:"#16A34A",display:"flex",alignItems:"center",justifyContent:"center",color:"#fff",fontSize:13,fontWeight:800}}>✓</div>}
@@ -831,7 +831,7 @@ ${injectPrenom(args.rebound)}`:"";
           <span style={{fontSize:11,fontWeight:600,color:idealDispo?"#15803D":"#B91C1C"}}>{idealDispo?`✓ Disponible en stock (${stockMap[idealTyp]?.nb})`:  "✗ Stock indisponible"}</span>
         </div>
       </button>
-
+ 
       {/* OPTION B — Choix Sales */}
       <button onClick={()=>setActiveOption("B")} style={{borderRadius:16,border:`2px solid ${activeOption==="B"?"#0B68B4":"#E4E4E7"}`,background:activeOption==="B"?"#EFF6FF":"#fff",padding:18,textAlign:"left",cursor:"pointer",transition:"all .2s",position:"relative"}}>
         {activeOption==="B"&&<div style={{position:"absolute",top:10,right:10,width:22,height:22,borderRadius:"50%",background:"#0B68B4",display:"flex",alignItems:"center",justifyContent:"center",color:"#fff",fontSize:13,fontWeight:800}}>✓</div>}
@@ -853,10 +853,10 @@ ${injectPrenom(args.rebound)}`:"";
         </div>}
       </button>
     </div>
-
+ 
     {/* ── BOUTON GÉNÉRER ── */}
     {!scriptGenerated&&<Btn onClick={generateScript} full color="#18181B" style={{padding:"13px",borderRadius:99,fontSize:14,marginBottom:16}}>⚡ Générer le Script Personnalisé — {activeOption==="A"?"Idéal Sherpas":"Choix Sales"}</Btn>}
-
+ 
     {/* ── ARGUMENT GENERATOR ── */}
     {scriptGenerated&&args&&<div>
       <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:14}}>
@@ -866,7 +866,7 @@ ${injectPrenom(args.rebound)}`:"";
         </div>
         <CopyBtn text={fullScript}/>
       </div>
-
+ 
       {[
         {icon:"🪝",label:"LE CROCHET (Hook)",desc:"Pourquoi ce profil va matcher avec la personnalité de l'enfant",text:args.hook,color:"#16A34A",bg:"#F0FDF4",border:"#C0EAD3"},
         {icon:"🏆",label:"ARGUMENT DE CONFIANCE (Trust)",desc:"Pourquoi ce profil rassure le parent",text:args.trust,color:"#0B68B4",bg:"#EFF6FF",border:"#BFDBFE"},
@@ -889,12 +889,12 @@ ${injectPrenom(args.rebound)}`:"";
           </div>
         </C>
       ))}
-
+ 
       <div style={{marginTop:4}}>
         <Btn onClick={()=>{setScriptGenerated(false);}} outline color="#71717A" sm>Changer d'option</Btn>
       </div>
     </div>}
-
+ 
     {scriptGenerated&&!args&&<C style={{background:"#FFF7F0",border:"1px solid #FED7AA",textAlign:"center",padding:24}}>
       <div style={{fontSize:20,marginBottom:8}}>🔧</div>
       <div style={{fontSize:14,color:"#92400E",fontWeight:600}}>Arguments en cours d'enrichissement pour ce profil</div>
@@ -903,7 +903,7 @@ ${injectPrenom(args.rebound)}`:"";
     </div>}{/* fin prescription step 2 */}
   </div>;/* fin wrapper onglets step 2 */
 }
-
+ 
 // ═══════════════════════ SALES — autres pages ═══════════════════════
 function SalesDash({rentree,user}){
   const nom=user?.name||"";
@@ -928,7 +928,7 @@ function SalesDash({rentree,user}){
     </C>
   </div>;
 }
-
+ 
 function SalesScripts({scripts}){
   const [phase,setPhase]=useState("intro");const p=scripts[phase];
   return <div>
@@ -937,7 +937,7 @@ function SalesScripts({scripts}){
     <div style={{display:"flex",flexDirection:"column",gap:10}}>{p.steps.map((s,i)=><C key={i} style={{borderLeft:`4px solid ${p.color}`,padding:"14px 18px"}}><div style={{display:"flex",gap:12,alignItems:"flex-start"}}><div style={{width:26,height:26,borderRadius:"50%",background:p.color,display:"flex",alignItems:"center",justifyContent:"center",color:"#fff",fontWeight:800,fontSize:11,flexShrink:0,fontFamily:"'Outfit',sans-serif"}}>{i+1}</div><div><Pill color={p.color}>{s.label}</Pill><div style={{fontSize:13,color:"#3F3F46",lineHeight:1.7,fontStyle:"italic",marginTop:7}}>"{s.text}"</div></div></div></C>)}</div>
   </div>;
 }
-
+ 
 function SalesObjections({objections,setSuggestions}){
   const [sel,setSel]=useState(null);const [showSug,setShowSug]=useState(false);const [sugText,setSugText]=useState("");const [done,setDone]=useState(false);
   async function submit(){await setSuggestions({id:Date.now(),date:today(),auteur:"Moi",type:"objection",contenu:sugText,statut:"pending"});setSugText("");setShowSug(false);setDone(true);setTimeout(()=>setDone(false),2000);}
@@ -949,13 +949,13 @@ function SalesObjections({objections,setSuggestions}){
     <C style={{background:"#F0FDF4",border:"1px solid #C0EAD3",padding:"13px 16px"}}><div style={{display:"flex",justifyContent:"space-between",alignItems:"center"}}><div style={{fontSize:12,fontWeight:600,color:"#15803D",fontFamily:"'Outfit',sans-serif"}}>💡 Une objection manque ?</div><Btn onClick={()=>setShowSug(!showSug)} sm color="#16A34A" outline>Suggérer</Btn></div>{showSug&&<div style={{marginTop:10}}><textarea value={sugText} onChange={e=>setSugText(e.target.value)} placeholder="Décris l'objection et la réponse suggérée..." rows={3} style={{width:"100%",fontSize:12,border:"1px solid #E4E4E7",borderRadius:9,padding:"9px 12px",fontFamily:"'Inter',sans-serif",resize:"vertical",boxSizing:"border-box"}}/><div style={{display:"flex",gap:7,marginTop:7}}><Btn onClick={submit} disabled={!sugText.trim()} sm color="#16A34A">Envoyer</Btn><Btn onClick={()=>setShowSug(false)} outline sm color="#71717A">Annuler</Btn></div></div>}</C>
   </div>;
 }
-
+ 
 const FORMATION_DEFAULT={
   sales:{title:"Expertise Sales",icon:"📞",color:"#16A34A",modules:[{id:1,title:"Fondamentaux de la vente",duration:"45 min",done:true,score:92,description:"Les bases de la persuasion et du cycle de vente Sherpas"},{id:2,title:"Découverte client — SPIN",duration:"60 min",done:true,score:85,description:"Méthode SPIN : Situation, Problème, Implication, Need-payoff"},{id:3,title:"Cycle de vente Sherpas",duration:"35 min",done:false,description:"Comprendre le tunnel de vente de l'appel au closing"},{id:4,title:"Techniques de closing",duration:"40 min",done:false,description:"Closing assumptif, doux, récapitulatif"}]},
   education:{title:"Secteur Éducation",icon:"🏫",color:"#0B68B4",modules:[{id:5,title:"Le système scolaire français",duration:"45 min",done:false,description:"De la maternelle au bac : programmes, enjeux, acteurs"},{id:6,title:"DYS, TDAH — troubles d'apprentissage",duration:"50 min",done:false,description:"Identifier et accompagner les profils atypiques"},{id:7,title:"Profils psychologiques élèves",duration:"40 min",done:false,description:"Les 4 profils de la Lanterne : introverti, décrocheur, compétiteur, stressé"},{id:8,title:"La Prépa — codes et attentes",duration:"35 min",done:false,description:"MPSI, PCSI, ECG : comprendre pour mieux prescrire"}]},
   argumentaires:{title:"Argumentaires V5",icon:"💡",color:"#DA4F00",modules:[{id:9,title:"Feature-to-Benefit : vendre les profils",duration:"55 min",done:false,description:"Transformer les caractéristiques d'un prof en bénéfices concrets"},{id:10,title:"Maîtriser la Matrice Dual Path",duration:"60 min",done:false,description:"Quand suivre l'idéal Matrice, quand pivoter"},{id:11,title:"Recadrer les attentes parentales",duration:"45 min",done:false,description:"Gérer les demandes irréalistes avec confiance et pédagogie"}]},
 };
-
+ 
 function SalesFormation({formations}){
   const F = formations && Object.keys(formations).length > 0 ? formations : FORMATION_DEFAULT;
   const [tab,setTab]=useState(Object.keys(F)[0]||"sales");
@@ -973,7 +973,7 @@ function SalesFormation({formations}){
     <div style={{display:"grid",gridTemplateColumns:"repeat(3,1fr)",gap:10}}>{[["🔬","Labo des Objections","Objections aléatoires avec timer"],["🎯","Le Juste Match","Diagnostic dual path en conditions réelles"],["📞","Roleplay Feature-to-Benefit","Génère le bon argument au bon moment"]].map(([ic,t,d])=><C key={t} style={{cursor:"pointer",borderTop:"4px solid #16A34A",padding:14}}><div style={{fontSize:24,marginBottom:6}}>{ic}</div><div style={{fontSize:12,fontWeight:700,color:"#18181B",marginBottom:3,fontFamily:"'Outfit',sans-serif"}}>{t}</div><div style={{fontSize:11,color:"#71717A",lineHeight:1.5}}>{d}</div></C>)}</div>
   </div>;
 }
-
+ 
 function SalesFeedback({feedbacks,setFeedbacks,setSuggestions,user}){
   const already=feedbacks.some(f=>f.date===today()&&f.auteur===user?.name);
   const [anon,setAnon]=useState(false);const [ct,setCt]=useState([]);const [obj,setObj]=useState([]);const [bien,setBien]=useState([]);const [bloque,setBloque]=useState([]);const [conf,setConf]=useState(7);const [sug,setSug]=useState("");const [done,setDone]=useState(false);
@@ -1000,7 +1000,7 @@ function SalesFeedback({feedbacks,setFeedbacks,setSuggestions,user}){
     <Btn onClick={submit} disabled={!ok} full color="#16A34A" style={{padding:"13px",borderRadius:99,fontSize:14}}>Envoyer mon feedback →</Btn>
   </div>;
 }
-
+ 
 function SalesDemandes({demandes,setDemandes,user}){
   const [cp,setCp]=useState("");const [ville,setVille]=useState("");const [mat,setMat]=useState([]);const [niv,setNiv]=useState("");const [typo,setTypo]=useState([]);const [ok2,setOk2]=useState(false);
   async function submit(){await setDemandes({id:Date.now(),date:today(),auteur:user?.name||"Moi",cp,ville,matieres:mat,niveau:niv,typo});setCp("");setVille("");setMat([]);setNiv("");setTypo([]);setOk2(true);setTimeout(()=>setOk2(false),2500);}
@@ -1017,7 +1017,7 @@ function SalesDemandes({demandes,setDemandes,user}){
     {demandes.filter(d=>d.date===today()).length>0&&<div style={{marginTop:16}}><div style={{fontSize:12,fontWeight:700,color:"#3F3F46",marginBottom:7,fontFamily:"'Outfit',sans-serif"}}>Saisies d'aujourd'hui</div>{demandes.filter(d=>d.date===today()).map(d=><C key={d.id} style={{marginBottom:7,padding:"11px 14px",borderLeft:"4px solid #16A34A"}}><div style={{fontSize:12,fontWeight:700,color:"#18181B",fontFamily:"'Outfit',sans-serif"}}>📍 {d.cp} {d.ville&&`— ${d.ville}`}</div><div style={{display:"flex",gap:4,flexWrap:"wrap",marginTop:5}}><Pill color="#16A34A">{d.niveau}</Pill>{(d.matieres||[]).map(m=><Pill key={m} color="#0B68B4">{m}</Pill>)}</div></C>)}</div>}
   </div>;
 }
-
+ 
 function SalesRentree({rentree,setRentree,user}){
   const [nom,setNom]=useState("");const [classe,setClasse]=useState("");const [mat,setMat]=useState([]);const [rappel,setRappel]=useState("");const [notes,setNotes]=useState("");const [done,setDone]=useState(false);
   async function submit(){await setRentree({id:Date.now(),date:today(),auteur:user?.name||"Moi",famille:nom,classe,matieres:mat,rappel,notes});setNom("");setClasse("");setMat([]);setRappel("");setNotes("");setDone(true);setTimeout(()=>setDone(false),2500);}
@@ -1039,14 +1039,14 @@ function SalesRentree({rentree,setRentree,user}){
     {rentree.map(r=><C key={r.id} style={{marginBottom:8,padding:"13px 16px",borderLeft:"4px solid #16A34A"}}><div style={{display:"flex",justifyContent:"space-between",alignItems:"flex-start"}}><div><div style={{fontSize:13,fontWeight:700,color:"#18181B",fontFamily:"'Outfit',sans-serif"}}>👨‍👩‍👧 {r.famille} · {r.classe}</div><div style={{display:"flex",gap:4,flexWrap:"wrap",marginTop:5}}>{(r.matieres||[]).map(m=><Pill key={m} color="#16A34A">{m}</Pill>)}</div>{r.notes&&<div style={{fontSize:11,color:"#71717A",marginTop:4,fontStyle:"italic"}}>"{r.notes}"</div>}</div><Pill color="#16A34A">📅 {r.rappel}</Pill></div></C>)}
   </div>;
 }
-
+ 
 // ═══════════════════════ MANAGER ═══════════════════════
 function ManagerVue({feedbacks,rentree,matchings}){
   const objC=cArr(feedbacks,"objections").slice(0,3);const bloqC=cArr(feedbacks,"bloque").slice(0,3);
   const avgC=feedbacks.length?Math.round(feedbacks.reduce((s,f)=>s+f.confiance,0)/feedbacks.length*10)/10:0;
   const cc=avgC>=7?"#16A34A":avgC>=5?"#DA4F00":"#E11D48";
   const followed=matchings.filter(m=>m.followed).length;const pctFollow=matchings.length?Math.round((followed/matchings.length)*100):0;
-
+ 
   const salesUsers=USERS.filter(u=>u.role==="sales");
   function salesStats(name){
     const fb=feedbacks.filter(f=>f.auteur===name);
@@ -1055,10 +1055,10 @@ function ManagerVue({feedbacks,rentree,matchings}){
     const pctIdeal=ma.length?Math.round((ma.filter(m=>m.followed).length/ma.length)*100):0;
     return {fb:fb.length,ma:ma.length,avgConf,pctIdeal};
   }
-
+ 
   return <div>
     <ST emoji="🧭" sub="Vue globale orientée formation — alimentée en temps réel.">Vue d'ensemble</ST>
-
+ 
     {/* KPIs globaux */}
     <div style={{display:"grid",gridTemplateColumns:"repeat(4,1fr)",gap:10,marginBottom:14}}>
       <Stat icon="💬" label="Feedbacks" value={feedbacks.length} color="#0B68B4"/>
@@ -1066,7 +1066,7 @@ function ManagerVue({feedbacks,rentree,matchings}){
       <Stat icon="⚖️" label="Suivi Idéal" value={`${pctFollow}%`} sub={`${followed}/${matchings.length} matchings`} color="#16A34A"/>
       <Stat icon="📈" label="CA Rentrée" value={`${(rentree.length*300).toLocaleString()}€`} color="#16A34A"/>
     </div>
-
+ 
     {/* Julien vs Jonathan */}
     <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:12,marginBottom:14}}>
       {salesUsers.map(u=>{
@@ -1092,7 +1092,7 @@ function ManagerVue({feedbacks,rentree,matchings}){
         </C>;
       })}
     </div>
-
+ 
     <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:12,marginBottom:12}}>
       <C>
         <div style={{fontWeight:700,fontSize:13,color:"#18181B",marginBottom:12,fontFamily:"'Outfit',sans-serif"}}>🛡️ Objections signalées</div>
@@ -1109,14 +1109,14 @@ function ManagerVue({feedbacks,rentree,matchings}){
         </div>)}
       </C>
     </div>
-
+ 
     <C style={{background:"#F0FDF4",border:"1px solid #C0EAD3"}}>
       <div style={{display:"flex",alignItems:"center",gap:8,marginBottom:10}}><Logo size={14}/><span style={{fontSize:13,fontWeight:700,color:"#15803D",fontFamily:"'Outfit',sans-serif"}}>Recommandations formation automatiques</span></div>
       {["Roleplay objection prix — session équipe cette semaine","Atelier closing dual path — basé sur les pivots récents","Module 'Profils psychologiques' — renforcement toute l'équipe"].map((a,i)=><div key={i} style={{marginBottom:9,paddingBottom:9,borderBottom:i<2?"1px solid #C0EAD3":"none",display:"flex",justifyContent:"space-between",alignItems:"center"}}><div style={{fontSize:12,color:"#3F3F46"}}>→ {a}</div><Pill color="#16A34A">Prioritaire</Pill></div>)}
     </C>
   </div>;
 }
-
+ 
 // ─── MATCHING IDÉAL VS MANUEL — NOUVEAU V5 ────────────────────────
 function ManagerMatching({matchings}){
   const total=matchings.length;const followed=matchings.filter(m=>m.followed).length;const pivoted=total-followed;const pct=total?Math.round((followed/total)*100):0;
@@ -1128,10 +1128,10 @@ function ManagerMatching({matchings}){
   const idealRank=Object.entries(idealCounts).sort((a,b)=>b[1]-a[1]);
   // Psychos qui pivotent le plus
   const psychoPivots={};matchings.filter(m=>!m.followed).forEach(m=>{psychoPivots[m.psycho]=(psychoPivots[m.psycho]||0)+1;});
-
+ 
   return <div>
     <ST emoji="⚖️" sub="Analyse de l'écart entre le profil idéal recommandé et le profil réellement vendu.">Idéal vs Manuel</ST>
-
+ 
     {/* Score global */}
     <GC style={{marginBottom:14}}>
       <div style={{display:"flex",justifyContent:"space-between",alignItems:"center"}}>
@@ -1150,7 +1150,7 @@ function ManagerMatching({matchings}){
       <div style={{marginTop:12,height:8,background:"rgba(255,255,255,.2)",borderRadius:99}}><div style={{height:8,background:"#fff",borderRadius:99,width:`${pct}%`}}/></div>
       <div style={{display:"flex",justifyContent:"space-between",marginTop:4}}><span style={{fontSize:11,color:"rgba(255,255,255,.7)"}}>0% — Toujours en pivot</span><span style={{fontSize:11,color:"rgba(255,255,255,.7)"}}>100% — Toujours l'Idéal</span></div>
     </GC>
-
+ 
     <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:12,marginBottom:12}}>
       {/* Profils idéaux les + recommandés */}
       <C>
@@ -1163,7 +1163,7 @@ function ManagerMatching({matchings}){
           </div>
         </div>)}
       </C>
-
+ 
       {/* Pivots les plus fréquents */}
       <C>
         <div style={{fontWeight:700,fontSize:13,color:"#18181B",marginBottom:12,fontFamily:"'Outfit',sans-serif"}}>🔄 Pivots les plus fréquents</div>
@@ -1172,7 +1172,7 @@ function ManagerMatching({matchings}){
         </div>)}
       </C>
     </div>
-
+ 
     {/* Psychos qui pivotent */}
     <C style={{marginBottom:12}}>
       <div style={{fontWeight:700,fontSize:13,color:"#18181B",marginBottom:12,fontFamily:"'Outfit',sans-serif"}}>🧠 Profils psycho les plus difficiles à matcher</div>
@@ -1181,7 +1181,7 @@ function ManagerMatching({matchings}){
         <Pill color="#E11D48">{n} pivot{n>1?"s":""}</Pill>
       </div>)}
     </C>
-
+ 
     {/* Historique */}
     <C>
       <div style={{fontWeight:700,fontSize:13,color:"#18181B",marginBottom:12,fontFamily:"'Outfit',sans-serif"}}>📋 Historique des matchings</div>
@@ -1198,7 +1198,7 @@ function ManagerMatching({matchings}){
     </C>
   </div>;
 }
-
+ 
 function ManagerBesoins({feedbacks}){
   const cc=cArr(feedbacks,"clientTypes");const bc=cArr(feedbacks,"bien").slice(0,4);const sugs=feedbacks.filter(f=>f.suggestions&&f.suggestions.trim()!=="");
   return <div>
@@ -1208,7 +1208,7 @@ function ManagerBesoins({feedbacks}){
     <C><div style={{fontWeight:700,fontSize:13,color:"#18181B",marginBottom:10,fontFamily:"'Outfit',sans-serif"}}>💡 Suggestions remontées</div>{sugs.length===0?<div style={{fontSize:12,color:"#A1A1AA"}}>Aucune suggestion.</div>:sugs.map(f=><div key={f.id} style={{marginBottom:9,padding:"10px 12px",background:"#F8FFF9",borderRadius:9,borderLeft:"3px solid #16A34A"}}><div style={{fontSize:10,color:"#A1A1AA",marginBottom:2}}>{f.auteur} · {f.date}</div><div style={{fontSize:12,color:"#3F3F46",fontStyle:"italic"}}>"{f.suggestions}"</div></div>)}</C>
   </div>;
 }
-
+ 
 function ManagerRentree({rentree}){
   const total=rentree.length*300;const matieres=cArr(rentree,"matieres");const rappels=[...rentree].sort((a,b)=>(a.rappel||"").localeCompare(b.rappel||""));
   return <div>
@@ -1221,7 +1221,7 @@ function ManagerRentree({rentree}){
     <C style={{background:"#F0FDF4",border:"1px solid #C0EAD3"}}><div style={{fontWeight:700,fontSize:13,color:"#15803D",marginBottom:8,fontFamily:"'Outfit',sans-serif"}}>💰 Simulation CA</div><div style={{display:"grid",gridTemplateColumns:"repeat(3,1fr)",gap:8}}>{[["Pessimiste",Math.round(total*.5),"#E11D48"],["Réaliste",Math.round(total*.75),"#DA4F00"],["Optimiste",total,"#16A34A"]].map(([l,v,c])=><div key={l} style={{padding:"10px 12px",background:"#fff",borderRadius:10,border:`1px solid ${c}25`}}><div style={{fontSize:10,color:"#71717A",marginBottom:3,fontFamily:"'Outfit',sans-serif"}}>{l} (50/75/100%)</div><div style={{fontSize:16,fontWeight:900,color:c,fontFamily:"'Outfit',sans-serif"}}>{v.toLocaleString()}€</div></div>)}</div></C>
   </div>;
 }
-
+ 
 function ManagerFeedbacks({feedbacks}){
   const [filter,setFilter]=useState("tous");
   const filtered=
@@ -1229,7 +1229,7 @@ function ManagerFeedbacks({feedbacks}){
     filter==="jonathan" ? feedbacks.filter(f=>f.auteur==="Jonathan") :
     filter==="anonymes" ? feedbacks.filter(f=>f.anonyme) :
     feedbacks;
-
+ 
   function getUserColor(auteur){
     const u=USERS.find(x=>x.name===auteur);
     return u?u.color:"#71717A";
@@ -1239,17 +1239,17 @@ function ManagerFeedbacks({feedbacks}){
     const u=USERS.find(x=>x.name===auteur);
     return u?u.avatar:auteur[0];
   }
-
+ 
   const tabs=[
     ["tous","Tous 📋",feedbacks.length],
     ["julien","Julien 📞",feedbacks.filter(f=>f.auteur==="Julien").length],
     ["jonathan","Jonathan 📞",feedbacks.filter(f=>f.auteur==="Jonathan").length],
     ["anonymes","Anonymes 🕵️",feedbacks.filter(f=>f.anonyme).length],
   ];
-
+ 
   return <div>
     <ST emoji="💬" sub="Tous les feedbacks de l'équipe — filtrables par Sales.">Feedbacks équipe</ST>
-
+ 
     {/* Stats rapides */}
     <div style={{display:"grid",gridTemplateColumns:"repeat(4,1fr)",gap:10,marginBottom:14}}>
       {USERS.filter(u=>u.role==="sales").map(u=>{
@@ -1266,12 +1266,12 @@ function ManagerFeedbacks({feedbacks}){
       {(()=>{const avgC=feedbacks.length?Math.round(feedbacks.reduce((s,f)=>s+f.confiance,0)/feedbacks.length*10)/10:0;const cc=avgC>=7?"#16A34A":avgC>=5?"#DA4F00":"#E11D48";return <C key="avg" style={{padding:14,textAlign:"center",borderTop:"3px solid #7C3AED"}}><div style={{fontSize:22,marginBottom:6}}>📊</div><div style={{fontSize:18,fontWeight:900,color:cc,fontFamily:"'Outfit',sans-serif"}}>{avgC}/10</div><div style={{fontSize:11,color:"#71717A",marginTop:1}}>Moyenne équipe</div><div style={{fontSize:10,color:"#A1A1AA"}}>{feedbacks.length} feedbacks total</div></C>;})()}
       {(()=>{const anon=feedbacks.filter(f=>f.anonyme).length;return <C key="anon" style={{padding:14,textAlign:"center",borderTop:"3px solid #6B7280"}}><div style={{fontSize:22,marginBottom:6}}>🕵️</div><div style={{fontSize:18,fontWeight:900,color:"#6B7280",fontFamily:"'Outfit',sans-serif"}}>{anon}</div><div style={{fontSize:11,color:"#71717A",marginTop:1}}>Anonymes</div><div style={{fontSize:10,color:"#A1A1AA"}}>{feedbacks.length>0?Math.round((anon/feedbacks.length)*100):0}% du total</div></C>;})()}
     </div>
-
+ 
     {/* Onglets filtre */}
     <div style={{display:"flex",gap:8,marginBottom:14,flexWrap:"wrap"}}>
       {tabs.map(([k,l,n])=><button key={k} onClick={()=>setFilter(k)} style={{padding:"6px 14px",borderRadius:99,border:`2px solid ${filter===k?"#16A34A":"#E4E4E7"}`,background:filter===k?"#16A34A":"#fff",color:filter===k?"#fff":"#71717A",fontWeight:700,fontSize:12,cursor:"pointer",fontFamily:"'Outfit',sans-serif",display:"flex",alignItems:"center",gap:6}}>{l}<span style={{background:filter===k?"rgba(255,255,255,.3)":"#F4F4F5",borderRadius:99,padding:"1px 7px",fontSize:11,fontWeight:800}}>{n}</span></button>)}
     </div>
-
+ 
     {/* Liste */}
     {filtered.length===0&&<C style={{textAlign:"center",padding:32,color:"#A1A1AA",fontSize:13}}>Aucun feedback pour ce filtre.</C>}
     <div style={{display:"flex",flexDirection:"column",gap:10}}>
@@ -1304,8 +1304,8 @@ function ManagerFeedbacks({feedbacks}){
     </div>
   </div>;
 }
-
-
+ 
+ 
 function ManagerProgression({matchings}){
   const salesUsers=USERS.filter(u=>u.role==="sales");
   function getStats(name){const m=matchings.filter(x=>x.auteur===name);const followed=m.filter(x=>x.followed).length;const pct=m.length?Math.round((followed/m.length)*100):0;return {total:m.length,followed,pct};}
@@ -1320,7 +1320,7 @@ function ManagerProgression({matchings}){
     </C>
   </div>;
 }
-
+ 
 // ═══════════════════════ FORMATEUR ═══════════════════════
 function FormateurScripts({scripts,setScripts}){
   const [phase,setPhase]=useState("intro");const [ed,setEd]=useState(null);const [val,setVal]=useState("");const p=scripts[phase];
@@ -1332,7 +1332,7 @@ function FormateurScripts({scripts,setScripts}){
     </div>
   </div>;
 }
-
+ 
 function FormateurStock({stock,setStock}){
   return <div>
     <ST emoji="📦" sub="Gère le stock de profs. Ces données alimentent la Lanterne V5 en temps réel.">Gestion du Stock</ST>
@@ -1340,7 +1340,7 @@ function FormateurStock({stock,setStock}){
     <div style={{display:"flex",flexDirection:"column",gap:9}}>{stock.map((s,i)=><C key={s.typ} style={{borderLeft:`4px solid ${s.dispo?"#16A34A":"#E11D48"}`,padding:"14px 18px"}}><div style={{display:"flex",justifyContent:"space-between",alignItems:"center"}}><div><div style={{fontSize:13,fontWeight:700,color:"#18181B",fontFamily:"'Outfit',sans-serif"}}>{s.typ}</div><div style={{fontSize:11,color:"#71717A",marginTop:2}}>{s.note}</div></div><div style={{display:"flex",alignItems:"center",gap:12}}><div style={{textAlign:"right"}}><div style={{fontSize:10,color:"#71717A",marginBottom:3}}>Quantité</div><input type="number" value={s.nb} min={0} onChange={e=>{const u=[...stock];u[i]={...u[i],nb:Number(e.target.value)};setStock(u);}} onBlur={()=>setStock([...stock])} style={{width:60,fontSize:13,fontWeight:700,border:"1px solid #E4E4E7",borderRadius:8,padding:"5px 8px",textAlign:"center",fontFamily:"'Outfit',sans-serif"}}/></div><div style={{textAlign:"center"}}><div style={{fontSize:10,color:"#71717A",marginBottom:3}}>Dispo</div><Tog value={s.dispo} onChange={v=>{const u=[...stock];u[i]={...u[i],dispo:v};setStock(u);}} color="#16A34A"/></div><Pill color={s.dispo?"#16A34A":"#E11D48"}>{s.dispo?`✓ ${s.nb}`:"✗ Indispo"}</Pill></div></div></C>)}</div>
   </div>;
 }
-
+ 
 function FormateurSuggestions({suggestions,setSuggestions,updateStatut,deleteSugg}){
   const pending=suggestions.filter(s=>s.statut==="pending");const approved=suggestions.filter(s=>s.statut==="approved");
   async function approve(id){if(updateStatut)await updateStatut(id,"approved");else setSuggestions(p=>p.map(s=>s.id===id?{...s,statut:"approved"}:s));}
@@ -1352,7 +1352,7 @@ function FormateurSuggestions({suggestions,setSuggestions,updateStatut,deleteSug
     {approved.map(s=><C key={s.id} style={{marginBottom:7,padding:"11px 14px",borderLeft:"4px solid #16A34A",background:"#F0FDF4"}}><div style={{display:"flex",justifyContent:"space-between",alignItems:"center"}}><div><div style={{fontSize:11,fontWeight:700,color:"#15803D",fontFamily:"'Outfit',sans-serif"}}>{s.auteur} · {s.date}</div><div style={{fontSize:12,color:"#3F3F46",marginTop:3,fontStyle:"italic"}}>"{s.contenu}"</div></div><Pill color="#16A34A">Intégré ✓</Pill></div></C>)}
   </div>;
 }
-
+ 
 function FormateurUsers(){
   const rc={sales:"#16A34A",manager:"#0B68B4",formateur:"#DA4F00"};
   const roleLabel={sales:"Sales 📞",manager:"Manager 👔",formateur:"Formateur 🎓"};
@@ -1374,7 +1374,7 @@ function FormateurUsers(){
     </table></C>
   </div>;
 }
-
+ 
 // ═══════════════════════ FORMATEUR FORMATIONS ═══════════════════════
 function FormateurFormations({formations,setFormations}){
   const F=formations&&Object.keys(formations).length>0?formations:FORMATION_DEFAULT;
@@ -1383,18 +1383,18 @@ function FormateurFormations({formations,setFormations}){
   const [editPilier,setEditPilier]=useState(null); // pilierKey or null
   const [showNewMod,setShowNewMod]=useState(false);
   const [showNewPilier,setShowNewPilier]=useState(false);
-
+ 
   // Module edit state
   const [mTitle,setMTitle]=useState("");const [mDur,setMDur]=useState("");const [mDesc,setMDesc]=useState("");
   // Pilier edit state
   const [pTitle,setPTitle]=useState("");const [pIcon,setPIcon]=useState("");const [pColor,setPColor]=useState("#16A34A");
   // New pilier state
   const [npTitle,setNpTitle]=useState("");const [npIcon,setNpIcon]=useState("📚");const [npColor,setNpColor]=useState("#7C3AED");
-
+ 
   const COLORS=["#16A34A","#0B68B4","#DA4F00","#7C3AED","#E11D48","#0891B2"];
-
+ 
   function save(next){setFormations({...next});}
-
+ 
   function startEditMod(pk,idx){
     const m=F[pk].modules[idx];
     setMTitle(m.title);setMDur(m.duration);setMDesc(m.description||"");
@@ -1419,7 +1419,7 @@ function FormateurFormations({formations,setFormations}){
     next[pilier]={...next[pilier],modules:[...next[pilier].modules,newMod]};
     save(next);setShowNewMod(false);setMTitle("");setMDur("");setMDesc("");
   }
-
+ 
   function startEditPilier(pk){
     setPTitle(F[pk].title);setPIcon(F[pk].icon);setPColor(F[pk].color);
     setEditPilier(pk);
@@ -1442,12 +1442,12 @@ function FormateurFormations({formations,setFormations}){
     const next={...F,[key]:{title:npTitle,icon:npIcon,color:npColor,modules:[]}};
     save(next);setPilier(key);setShowNewPilier(false);setNpTitle("");setNpIcon("📚");setNpColor("#7C3AED");
   }
-
+ 
   const pill=F[pilier]||Object.values(F)[0];
-
+ 
   return <div>
     <ST emoji="🎓" sub="Gérez les piliers de formation et leurs modules. Les Sales voient les changements immédiatement.">Éditeur Formations</ST>
-
+ 
     {/* Piliers */}
     <C style={{marginBottom:14}}>
       <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:12}}>
@@ -1462,7 +1462,7 @@ function FormateurFormations({formations,setFormations}){
           </div>
         ))}
       </div>
-
+ 
       {/* Nouveau pilier */}
       {showNewPilier&&<div style={{marginTop:14,padding:14,background:"#F8FFF9",borderRadius:10,border:"1px solid #C0EAD3"}}>
         <div style={{fontSize:12,fontWeight:700,color:"#15803D",marginBottom:10,fontFamily:"'Outfit',sans-serif"}}>Nouveau pilier</div>
@@ -1478,7 +1478,7 @@ function FormateurFormations({formations,setFormations}){
           <Btn sm outline color="#71717A" onClick={()=>setShowNewPilier(false)}>Annuler</Btn>
         </div>
       </div>}
-
+ 
       {/* Éditer pilier */}
       {editPilier&&<div style={{marginTop:14,padding:14,background:"#FFF7F0",borderRadius:10,border:"1px solid #FED7AA"}}>
         <div style={{fontSize:12,fontWeight:700,color:"#C2410C",marginBottom:10,fontFamily:"'Outfit',sans-serif"}}>Modifier le pilier</div>
@@ -1496,14 +1496,14 @@ function FormateurFormations({formations,setFormations}){
         </div>
       </div>}
     </C>
-
+ 
     {/* Modules du pilier sélectionné */}
     {pill&&<C>
       <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:14}}>
         <div style={{fontSize:13,fontWeight:700,color:"#18181B",fontFamily:"'Outfit',sans-serif"}}>{pill.icon} Modules — {pill.title}</div>
         <Btn sm color={pill.color} onClick={()=>{setShowNewMod(true);setEditMod(null);setMTitle("");setMDur("");setMDesc("");}}>+ Ajouter un module</Btn>
       </div>
-
+ 
       {/* Nouveau module */}
       {showNewMod&&<div style={{marginBottom:14,padding:14,background:pill.color+"08",borderRadius:10,border:`1px solid ${pill.color}35`}}>
         <div style={{fontSize:12,fontWeight:700,color:pill.color,marginBottom:10,fontFamily:"'Outfit',sans-serif"}}>Nouveau module</div>
@@ -1512,7 +1512,7 @@ function FormateurFormations({formations,setFormations}){
         <div style={{marginBottom:10}}><div style={{fontSize:11,color:"#71717A",marginBottom:4}}>Description</div><textarea value={mDesc} onChange={e=>setMDesc(e.target.value)} placeholder="Ce que les Sales vont apprendre…" rows={2} style={{width:"100%",fontSize:12,border:"1px solid #E4E4E7",borderRadius:8,padding:"8px 11px",fontFamily:"'Inter',sans-serif",resize:"vertical",boxSizing:"border-box"}}/></div>
         <div style={{display:"flex",gap:7}}><Btn sm color={pill.color} onClick={addMod} disabled={!mTitle.trim()}>Ajouter</Btn><Btn sm outline color="#71717A" onClick={()=>setShowNewMod(false)}>Annuler</Btn></div>
       </div>}
-
+ 
       {/* Liste des modules */}
       <div style={{display:"flex",flexDirection:"column",gap:9}}>
         {pill.modules.length===0&&<div style={{textAlign:"center",padding:24,color:"#A1A1AA",fontSize:13}}>Aucun module — clique sur "Ajouter un module".</div>}
@@ -1544,7 +1544,7 @@ function FormateurFormations({formations,setFormations}){
     </C>}
   </div>;
 }
-
+ 
 // ═══════════════════════ MANAGER USERS ═══════════════════════
 function ManagerUsers({extraUsers,setExtraUsers}){
   const [showForm,setShowForm]=useState(false);
@@ -1554,10 +1554,10 @@ function ManagerUsers({extraUsers,setExtraUsers}){
   const [done,setDone]=useState(false);
   const AVATAR_COLORS=["#16A34A","#0B68B4","#DA4F00","#7C3AED","#E11D48","#0891B2","#D97706"];
   const allUsers=[...USERS,...(extraUsers||[])];
-
+ 
   function getInitials(n){return n.trim().split(" ").map(w=>w[0]||"").join("").slice(0,2).toUpperCase();}
   function randColor(){return AVATAR_COLORS[Math.floor(Math.random()*AVATAR_COLORS.length)];}
-
+ 
   function addUser(){
     if(!name.trim()||!email.trim()) return;
     const newUser={
@@ -1577,15 +1577,15 @@ function ManagerUsers({extraUsers,setExtraUsers}){
   function deleteUser(id){
     setExtraUsers(p=>(p||[]).filter(u=>u.id!==id));
   }
-
+ 
   const rc={sales:"#16A34A",manager:"#0B68B4",formateur:"#DA4F00"};
   const rl={sales:"Sales 📞",manager:"Manager 👔",formateur:"Formateur 🎓"};
-
+ 
   return <div>
     <ST emoji="👥" sub="Créez et gérez les comptes de l'équipe. Le mot de passe est commun à tous les comptes.">Gestion des utilisateurs</ST>
-
+ 
     {done&&<div style={{marginBottom:12,padding:"11px 16px",borderRadius:10,background:"#D1FAE5",border:"1px solid #86EFAC",fontSize:13,fontWeight:600,color:"#15803D"}}>✅ Utilisateur créé ! Il peut se connecter dès maintenant avec le mot de passe commun.</div>}
-
+ 
     {/* Mot de passe commun */}
     <C style={{marginBottom:14,background:"#F0FDF4",border:"1px solid #C0EAD3"}}>
       <div style={{display:"flex",alignItems:"center",gap:10}}>
@@ -1596,7 +1596,7 @@ function ManagerUsers({extraUsers,setExtraUsers}){
         </div>
       </div>
     </C>
-
+ 
     {/* Stats rapides */}
     <div style={{display:"grid",gridTemplateColumns:"repeat(3,1fr)",gap:10,marginBottom:14}}>
       {[["📞","Sales",allUsers.filter(u=>u.role==="sales").length,"#16A34A"],["👔","Managers",allUsers.filter(u=>u.role==="manager").length,"#0B68B4"],["🎓","Formateurs",allUsers.filter(u=>u.role==="formateur").length,"#DA4F00"]].map(([ic,l,v,c])=>(
@@ -1607,12 +1607,12 @@ function ManagerUsers({extraUsers,setExtraUsers}){
         </C>
       ))}
     </div>
-
+ 
     {/* Bouton créer */}
     <div style={{display:"flex",justifyContent:"flex-end",marginBottom:14}}>
       <Btn color="#1E40AF" onClick={()=>setShowForm(!showForm)}>+ Créer un utilisateur</Btn>
     </div>
-
+ 
     {/* Formulaire création */}
     {showForm&&<C style={{marginBottom:14,border:"2px solid #1E40AF",background:"#EFF6FF"}}>
       <div style={{fontSize:14,fontWeight:700,color:"#1E40AF",marginBottom:14,fontFamily:"'Outfit',sans-serif"}}>➕ Nouveau compte</div>
@@ -1634,7 +1634,7 @@ function ManagerUsers({extraUsers,setExtraUsers}){
         <Btn outline color="#71717A" onClick={()=>setShowForm(false)}>Annuler</Btn>
       </div>
     </C>}
-
+ 
     {/* Tableau des utilisateurs */}
     <C style={{padding:0,overflow:"hidden"}}>
       <table style={{width:"100%",borderCollapse:"collapse"}}>
@@ -1668,7 +1668,7 @@ function ManagerUsers({extraUsers,setExtraUsers}){
     </C>
   </div>;
 }
-
+ 
 // ═══════════════════════ SIDEBAR WITH USER ═══════════════════════
 function SidebarWithUser({role,page,setPage,onLogout,user,dbReady,loading}){
   const th=B[role];
@@ -1704,7 +1704,7 @@ function SidebarWithUser({role,page,setPage,onLogout,user,dbReady,loading}){
     </div>
   </div>;
 }
-
+ 
 // ═══════════════════════ LOGIN SCREEN ═══════════════════════
 function LoginScreen({onLogin}){
   const [selectedUser,setSelectedUser]=useState(null);
@@ -1712,19 +1712,19 @@ function LoginScreen({onLogin}){
   const [error,setError]=useState("");
   const [showPwd,setShowPwd]=useState(false);
   const [loading,setLoading]=useState(false);
-
+ 
   function handleLogin(){
     if(!selectedUser){setError("Sélectionne ton compte.");return;}
     if(pwd!==PASSWORD){setError("Mot de passe incorrect. Réessaie.");setPwd("");return;}
     setError("");setLoading(true);
     setTimeout(()=>onLogin(selectedUser),700);
   }
-
+ 
   return <div style={{minHeight:"100vh",background:"linear-gradient(150deg,#0D1F12 0%,#16A34A 60%,#62E58E 100%)",display:"flex",flexDirection:"column",alignItems:"center",justifyContent:"center",padding:32,position:"relative",overflow:"hidden"}}>
     {/* Déco */}
     <svg style={{position:"absolute",top:0,left:0,opacity:.08,pointerEvents:"none"}} width="400" height="280" viewBox="0 0 400 280"><path d="-20,80 Q80,20 180,100 Q280,180 380,60" stroke="white" strokeWidth="60" fill="none" strokeLinecap="round"/></svg>
     <svg style={{position:"absolute",bottom:0,right:0,opacity:.06,pointerEvents:"none"}} width="360" height="260" viewBox="0 0 360 260"><path d="0,200 Q100,100 220,160 Q320,210 380,100" stroke="white" strokeWidth="70" fill="none" strokeLinecap="round"/></svg>
-
+ 
     {/* Logo */}
     <div style={{display:"flex",alignItems:"center",gap:12,marginBottom:8}}>
       <Logo size={44} white={true}/>
@@ -1734,14 +1734,14 @@ function LoginScreen({onLogin}){
       <span style={{background:"rgba(255,255,255,.2)",color:"#fff",borderRadius:99,padding:"4px 14px",fontSize:12,fontWeight:700,fontFamily:"'Outfit',sans-serif"}}>🏔️ Sales Center V5</span>
       <span style={{background:"rgba(255,255,255,.2)",color:"#fff",borderRadius:99,padding:"4px 14px",fontSize:12,fontWeight:700,fontFamily:"'Outfit',sans-serif"}}>Accès sécurisé 🔒</span>
     </div>
-
+ 
     {/* Login box */}
     <div style={{width:"100%",maxWidth:460,background:"rgba(255,255,255,.97)",borderRadius:24,padding:36,boxShadow:"0 24px 80px rgba(0,0,0,.25)"}}>
       <div style={{textAlign:"center",marginBottom:28}}>
         <div style={{fontSize:20,fontWeight:900,color:"#18181B",fontFamily:"'Outfit',sans-serif",marginBottom:4}}>Connexion à ton espace</div>
         <div style={{fontSize:13,color:"#71717A"}}>Sélectionne ton compte puis entre le mot de passe</div>
       </div>
-
+ 
       {/* Sélection utilisateur */}
       <div style={{marginBottom:20}}>
         <div style={{fontSize:12,fontWeight:700,color:"#3F3F46",marginBottom:10,fontFamily:"'Outfit',sans-serif"}}>👤 Ton compte</div>
@@ -1768,7 +1768,7 @@ function LoginScreen({onLogin}){
           })}
         </div>
       </div>
-
+ 
       {/* Mot de passe */}
       <div style={{marginBottom:16}}>
         <div style={{fontSize:12,fontWeight:700,color:"#3F3F46",marginBottom:8,fontFamily:"'Outfit',sans-serif"}}>🔒 Mot de passe</div>
@@ -1785,7 +1785,7 @@ function LoginScreen({onLogin}){
         </div>
         {error&&<div style={{fontSize:12,color:"#E11D48",marginTop:6,fontWeight:600,fontFamily:"'Outfit',sans-serif"}}>⚠️ {error}</div>}
       </div>
-
+ 
       {/* Bouton */}
       <button onClick={handleLogin} disabled={loading} style={{
         width:"100%",padding:"14px",borderRadius:99,border:"none",
@@ -1797,14 +1797,14 @@ function LoginScreen({onLogin}){
       }}>
         {loading?"Connexion en cours…":"Se connecter →"}
       </button>
-
+ 
       <div style={{textAlign:"center",marginTop:16,fontSize:11,color:"#A1A1AA"}}>
         Accès réservé à l'équipe Sherpas · Toute tentative est enregistrée
       </div>
     </div>
   </div>;
 }
-
+ 
 // ═══════════════════════ APP ROOT — SUPABASE ═══════════════════════
 function App(){
   const [user,setUser]       = useState(null);
@@ -1813,7 +1813,7 @@ function App(){
   const [loading,setLoading] = useState(false);
   const [dbReady,setDbReady] = useState(false);
   const [dbError,setDbError] = useState(null);
-
+ 
   // ── State data — pré-chargé avec données locales, remplacé par Supabase ──
   const [scripts]              = useState(INIT_SCRIPTS);
   const [objections]           = useState(INIT_OBJECTIONS);
@@ -1825,7 +1825,7 @@ function App(){
   const [matchings,  setMatchings]   = useState(INIT_MATCHINGS);
   const [formations, setFormations]  = useState(FORMATION_DEFAULT);
   const [extraUsers, setExtraUsers]  = useState([]);
-
+ 
   // ── Chargement Supabase (en arrière-plan, non-bloquant) ──────────────
   async function loadAll(){
     setLoading(true); setDbError(null);
@@ -1861,7 +1861,7 @@ function App(){
       setDbReady(false);
     } finally { setLoading(false); }
   }
-
+ 
   // ── Login SYNCHRONE — affiche l'app immédiatement, charge Supabase après ──
   function handleLogin(u){
     const roleToSpace={sales:"sales",manager:"manager",formateur:"formateur"};
@@ -1873,7 +1873,7 @@ function App(){
     // Supabase en arrière-plan — ne bloque pas l'affichage
     setTimeout(()=>loadAll(), 0);
   }
-
+ 
   function logout(){
     setUser(null);setSpace(null);setPage(null);
     setDbReady(false);setDbError(null);
@@ -1881,7 +1881,7 @@ function App(){
     setFeedbacks(INIT_FEEDBACKS);setMatchings(INIT_MATCHINGS);
     setDemandes(INIT_DEMANDES);setRentree(INIT_RENTREE);setSuggestions(INIT_SUGGESTIONS);
   }
-
+ 
   // ── Temps réel Supabase (seulement si connecté) ────────────────────
   useEffect(()=>{
     if(!user||!dbReady) return;
@@ -1896,7 +1896,7 @@ function App(){
     ];
     return ()=>channels.forEach(c=>{ try{sb.removeChannel(c);}catch(e){} });
   },[user,dbReady]);
-
+ 
   // ── Fonctions de sauvegarde — écrivent en local ET dans Supabase ──
   async function addFeedback(f){
     // Mise à jour locale immédiate
@@ -1951,23 +1951,23 @@ function App(){
     try{await sb.from("config").upsert({key:"extra_users",value:JSON.stringify(next)},{onConflict:"key"});}
     catch(e){console.warn("Supabase write skipped:",e.message);}
   }
-
+ 
   // ── Guards ────────────────────────────────────────────────────────
   if(!user||!space||!page) return <LoginScreen onLogin={handleLogin}/>;
-
+ 
   // ── Données filtrées par Sales ────────────────────────────────────
   const myFeedbacks = user.role==="sales" ? feedbacks.filter(f=>f.auteur===user.name) : feedbacks;
   const myDemandes  = user.role==="sales" ? demandes.filter(d=>d.auteur===user.name)  : demandes;
   const myRentree   = user.role==="sales" ? rentree.filter(r=>r.auteur===user.name)   : rentree;
   const myMatchings = user.role==="sales" ? matchings.filter(m=>m.auteur===user.name) : matchings;
-
+ 
   // ── Bannière statut DB ────────────────────────────────────────────
   const dbBanner = loading
     ? <div style={{background:"#EFF6FF",border:"1px solid #BFDBFE",borderRadius:10,padding:"9px 16px",marginBottom:12,fontSize:12,color:"#1D4ED8",display:"flex",alignItems:"center",gap:8}}><div style={{width:14,height:14,border:"2px solid #93C5FD",borderTopColor:"#1D4ED8",borderRadius:"50%",animation:"spin .8s linear infinite",flexShrink:0}}/> Synchronisation avec Supabase…</div>
     : dbError
     ? <div style={{background:"#FEF2F2",border:"1px solid #FECACA",borderRadius:10,padding:"9px 16px",marginBottom:12,fontSize:12,color:"#991B1B",display:"flex",justifyContent:"space-between",alignItems:"center"}}><span>⚠️ Mode local — données non synchronisées ({dbError.slice(0,60)}…)</span><button onClick={loadAll} style={{background:"#EF4444",color:"#fff",border:"none",borderRadius:6,padding:"4px 10px",cursor:"pointer",fontSize:11,fontWeight:700,fontFamily:"'Outfit',sans-serif"}}>Réessayer</button></div>
     : null;
-
+ 
   // ── Pages ─────────────────────────────────────────────────────────
   const pages={
     dash:      ()=><SalesDash rentree={myRentree} user={user}/>,
@@ -1992,7 +1992,7 @@ function App(){
     "f-users":      ()=><FormateurUsers/>,
   };
   const Page=pages[page]||(()=>null);
-
+ 
   return <div style={{display:"flex",height:"100vh",fontFamily:"'Inter',sans-serif",background:"#F8FFF9"}}>
     <SidebarWithUser role={space} page={page} setPage={setPage} onLogout={logout} user={user} dbReady={dbReady} loading={loading}/>
     <div style={{flex:1,overflow:"auto",padding:26}}>
@@ -2001,11 +2001,11 @@ function App(){
     </div>
   </div>;
 }
-
+ 
 ReactDOM.createRoot(document.getElementById('root')).render(<App/>);
 if(window.__clearLoading) window.__clearLoading();
 </script>
-
+ 
 <!-- Lanceur intelligent : cache OU compilation Babel selon disponibilité -->
 <script>
 (function(){
@@ -2014,7 +2014,7 @@ if(window.__clearLoading) window.__clearLoading();
     s.textContent=code;
     document.body.appendChild(s);
   }
-
+ 
   function compileAndRun(){
     var src=document.getElementById('app-source').textContent;
     var compiled=Babel.transform(src,{presets:['react'],plugins:['transform-class-properties']}).code;
@@ -2025,7 +2025,7 @@ if(window.__clearLoading) window.__clearLoading();
     }catch(e){}
     runCompiled(compiled);
   }
-
+ 
   if(window.__compiledJS){
     // ⚡ Cache disponible — Babel inutile, démarrage instantané
     runCompiled(window.__compiledJS);
@@ -2043,3 +2043,4 @@ if(window.__clearLoading) window.__clearLoading();
 </script>
 </body>
 </html>
+ 
