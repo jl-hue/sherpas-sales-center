@@ -1,7 +1,6 @@
 {
   "name": "sherpas-sales-center",
   "version": "5.0.0",
-  "description": "Sherpas Sales Center — outil interne d'aide à la vente",
   "scripts": {
     "build": "node build.js"
   },
